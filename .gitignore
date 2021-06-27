@@ -1,0 +1,10 @@
+ABSA-PyTorch/
+SemEval-Triplet-data/
+*.ipynb
+.idea/
+.ipynb_checkpoints/
+*/.ipynb
+*/.ipynb_checkpoints
+*/*.csv
+*/__pycache__/*
+data/*/others/*
