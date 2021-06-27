@@ -1,0 +1,50 @@
+>>> processing /home/kevin/nut/1_project/absa/data/Semeval2014/raw/Restaurants_Train_v2.xml .
+> # sentence: 3041
+>>> processing /home/kevin/nut/1_project/absa/data/Semeval2014/raw/Restaurants_Train_v2.xml .
+> # sentence: 3041
+>>> processing /home/kevin/nut/1_project/absa/data/Semeval2014/raw/Restaurants_Train_v2.xml .
+> # sentence: 3041
+>>> processing /home/kevin/nut/1_project/absa/data/Semeval2014/raw/Restaurants_Train_v2.xml .
+> # sentence: 3041
+>>> processing /home/kevin/nut/1_project/absa/data/Semeval2014/raw/Restaurants_Train_v2.xml .
+> # sentence: 3041
+> # aspect 3693
+> {'positive': 2164, 'negative': 805, 'neutral': 633, 'conflict': 91}
+> # train 2435 # dev 310 # test 296
+>>> processing /home/kevin/nut/1_project/absa/data/Semeval2014/raw/Restaurants_Train_v2.xml .
+> # sentence: 3041
+> # aspect 3693
+> {'positive': 2164, 'negative': 805, 'neutral': 633, 'conflict': 91}
+> # train 2435 # dev 310 # test 296
+>>> processing /home/kevin/nut/1_project/absa/data/Semeval2014/raw/Restaurants_Train_v2.xml .
+> # sentence: 3041
+> # aspect 3693
+> {'positive': 2164, 'negative': 805, 'neutral': 633, 'conflict': 91}
+> # train 2435 # dev 310 # test 296
+>>> processing /home/kevin/nut/1_project/absa/data/Semeval2014/raw/Restaurants_Train_v2.xml .
+> # sentence: 3041
+> # aspect 3693
+> {'positive': 2164, 'negative': 805, 'neutral': 633, 'conflict': 91}
+> # train 2435 # dev 310 # test 296
+>>> processing /home/kevin/nut/1_project/absa/data/Semeval2014/raw/Restaurants_Train_v2.xml .
+> # sentence: 3041
+> # aspect 3693
+> {'positive': 2164, 'negative': 805, 'neutral': 633, 'conflict': 91}
+> # train 2435 # dev 310 # test 296
+>>> processing /home/kevin/nut/1_project/absa/data/Semeval2016/raw/ABSA16_Restaurants_Train_SB1_v2.xml .
+> # sentence: 2000
+>>> processing /home/kevin/nut/1_project/absa/data/Semeval2014/raw/Restaurants_Train_v2.xml .
+> # sentence: 3041
+> # aspect 3693
+> {'positive': 2164, 'negative': 805, 'neutral': 633, 'conflict': 91}
+> # train 2435 # dev 310 # test 296
+>>> processing /home/kevin/nut/1_project/absa/data/Semeval2016/raw/ABSA16_Restaurants_Train_SB1_v2.xml .
+> # sentence: 2000
+> # aspect 2507
+> {'positive': 1657, 'negative': 749, 'neutral': 101, 'conflict': 0}
+> # train 1578 # dev 205 # test 217
+>>> processing /home/kevin/nut/1_project/absa/data/Semeval2014/raw/Laptop_Train_v2.xml .
+> # sentence: 3045
+> # aspect 2358
+> {'positive': 987, 'negative': 866, 'neutral': 460, 'conflict': 45}
+> # train 2443 # dev 306 # test 296
