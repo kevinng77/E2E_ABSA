@@ -8,3 +8,4 @@ SemEval-Triplet-data/
 */*.csv
 */__pycache__/*
 data/*/others/*
+data/*

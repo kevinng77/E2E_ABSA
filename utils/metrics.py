@@ -12,7 +12,7 @@ def compute_acc(outputs, target, attention_mask):
     """
     with torch.no_grad():
         pred = torch.argmax(outputs, dim=-1)
-        print(torch.sum(pred).item())
+        # print(torch.sum(pred).item())
         acc = torch.sum((pred == target) & (attention_mask != 0)) / torch.sum(attention_mask)
     # print(torch.sum((0 == target) & (attention_mask != 0)) / torch.sum(attention_mask))
     return acc.item()
