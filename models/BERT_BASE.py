@@ -2,6 +2,12 @@ import torch.nn as nn
 import torch
 from transformers import BertModel
 
+# embedding:
+class Glove():
+
+
+class ELMo():
+
 
 class BERT(nn.Module):
     def __init__(self, bert, args):
@@ -21,3 +27,8 @@ class BERT(nn.Module):
         outputs = self.softmax(outputs)
         return outputs
 
+# model
+class linear():
+
+
+class crf():

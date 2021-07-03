@@ -7,5 +7,6 @@ SemEval-Triplet-data/
 */.ipynb_checkpoints
 */*.csv
 */__pycache__/*
-data/*/others/*
+# data/*/others/*
 data/*
+checkout/*

@@ -7,6 +7,7 @@ parser.add_argument('--pretrained_bert_name', type=str, default='bert-base-uncas
                     help='bert-base-uncased')
 parser.add_argument('--split_ratio', type=float, nargs='+',
                     default=[0.8, 0.1, 0.1], help='[train_ratio, dev_ratio, test_ratio]')
+parser.add_argument('--bpe',default=False,action='store_true')
 
 # model param
 parser.add_argument("--dropout", type=float, default=0.1)
@@ -14,8 +15,8 @@ parser.add_argument("--l2reg", type=float, default=1e-5)
 parser.add_argument("--num_classes", type=int, default=10)
 parser.add_argument("--batch_size", type=int, default=8)
 parser.add_argument("--lr", type=float, default=2e-5)
-parser.add_argument("--epochs", type=int, default=10)
-parser.add_argument("--step", type=int, default=500,
+parser.add_argument("--epochs", type=int, default=100)
+parser.add_argument("--step", type=int, default=50,
                     help="checkout for each _ number of training step")
 parser.add_argument("--model_name",type=str,default='bert')
 
@@ -24,18 +25,20 @@ parser.add_argument("--patience", type=int, default=10)
 parser.add_argument("--optimizer", type=str, default="adam")
 parser.add_argument("--shuffle", action='store_true', default=False)
 parser.add_argument("--load_model", action='store_true', default=False)
-parser.add_argument("--state_dict_path", type=str, default="2021-06-16 08:40:51_val_acc_0.34.pth")
+parser.add_argument("--state_dict_path", type=str, default="bert_val_acc_final.pth")
 parser.add_argument("--seed", type=int, default=7)
+parser.add_argument("--metrics",type=str,default="f1",help="f1 or acc")
+
 
 # path
 parser.add_argument('--working_path', type=str, default="/home/kevin/nut/1_project/absa/",)
-parser.add_argument('--mode',type=str,default="res14",help="res14, res16, lap14 or debug")
+parser.add_argument('--mode',type=str,default="debug",help="res14, res16, lap14 or debug")
 
 args = parser.parse_args()
-
-
-
 working_path = args.working_path
+
+args.state_dict_path = "checkout/state_dict/" + args.state_dict_path
+
 raw_data_path = {
     "res14":working_path + "data/Semeval2014/raw/Restaurants_Train_v2.xml"
     ,
