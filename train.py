@@ -1,5 +1,5 @@
 import argparse
-from transformers import BertModel, BertConfig
+from transformers import BertModel
 import torch
 from torch.utils.data import Dataset
 from transformers import BertTokenizer
@@ -12,7 +12,7 @@ import logging
 import sys
 from torch.utils.data import DataLoader
 from datetime import datetime
-from utils.metrics import Accuracy, F1
+from utils.metrics import Accuracy, F1, FocalLoss
 from config import config
 import time
 
@@ -43,25 +43,42 @@ class Trainer(object):
         self.train_metric = 0
         self.train_loss = 0
         self.step = 0
-        self.min_metrics = 0.5
+        self.min_metrics = 0.5  # min metrics to save model
 
         # training settings
-        weight = [1.1 for _ in range(self.args.num_classes)]
-        weight[0] = 0.007
-        criterion_weight = torch.tensor(weight).to(self.args.device)
-
-        self.criterion = nn.CrossEntropyLoss(ignore_index=self.tokenizer.pad_token_id,
-                                             weight=criterion_weight
-                                             )
-
-        self.optimizer = self.args.optimizer(self.model.parameters()
-                                             , lr=self.args.lr, weight_decay=self.args.l2reg)
-        if args.metrics == "f1":
-            self.metrics = F1(args.num_classes)
-        # elif args.metrics == 'acc':
-        #     self.metrics = Accuracy()
+        if args.loss == "CE":
+            self.weight = [1.1 for _ in range(self.args.num_classes)]
+            self.weight[0] = 7e-3  # Adam ok
+            criterion_weight = torch.tensor(self.weight).to(self.args.device)
+            self.criterion = nn.CrossEntropyLoss(ignore_index=self.tokenizer.pad_token_id,
+                                                 weight=criterion_weight)
+        elif args.loss == "focal":
+            self.weight = [0.25 for _ in range(self.args.num_classes)]
+            self.criterion = FocalLoss(class_num=args.num_classes,
+                                       alpha=self.weight,
+                                       gamma=2,
+                                       device = args.device
+                                       )
         else:
-            assert "Accuracy only support f1"
+            assert f"loss function {args.loss} not in 'CE' , 'focal"
+        self.optimizer = self.args.optimizer(self.model.parameters(),
+                                             lr=self.args.lr,
+                                             weight_decay=self.args.l2reg)
+        if args.metrics == "f1":  # for future work, change metrics
+            self.metrics = F1(args.num_classes)
+        else:
+            assert "--metrics only support f1"
+
+        self.dev_dataloader = DataLoader(E2EABSA_dataset(file_path=self.args.file_path['dev'],
+                                                         tokenizer=self.tokenizer),
+                                         batch_size=self.args.batch_size,
+                                         shuffle=self.args.shuffle,
+                                         drop_last=True)
+        self.train_dataloader = DataLoader(E2EABSA_dataset(file_path=self.args.file_path['train'],
+                                                           tokenizer=self.tokenizer),
+                                           batch_size=self.args.batch_size,
+                                           shuffle=self.args.shuffle,
+                                           drop_last=True)
 
     def _gen_inputs(self, data):
         inputs = data["text_ids"].to(self.args.device)
@@ -71,7 +88,7 @@ class Trainer(object):
 
     def _train_epoch(self, epoch):
         self.model.train()
-        TP,FP,FN =0,0,0
+        TP, FP, FN = 0, 0, 0
         time1 = time.time()
         for data in self.train_dataloader:
             self.optimizer.zero_grad()
@@ -80,15 +97,15 @@ class Trainer(object):
             loss = self.criterion(output.view(-1, self.args.num_classes), target.view(-1))
             loss.backward()
             self.optimizer.step()
-            dTP, dFP,dFN = self.metrics(output, target, attention_mask)
+            dTP, dFP, dFN = self.metrics(output, target, attention_mask)
             TP += dTP
             FP += dFP
             FN += dFN
             self.train_loss += loss
             self.step += 1
             if self.step % self.args.step == 0:
-                self.train_metric = self.metrics.get_f1(TP,FP,FN)
-                self._checkout(epoch,time1)
+                self.train_metric = self.metrics.get_f1(TP, FP, FN)
+                self._checkout(epoch, time1)
                 time1 = time.time()
                 self.train_loss, self.train_metric = 0, 0
                 TP, FP, FN = 0, 0, 0
@@ -97,7 +114,7 @@ class Trainer(object):
     def _dev_epoch(self):
         self.model.eval()
         dev_losses = 0
-        TP,FP,FN = 0,0,0
+        TP, FP, FN = 0, 0, 0
         count = 0
         with torch.no_grad():
             for data in self.dev_dataloader:
@@ -105,27 +122,18 @@ class Trainer(object):
                 inputs, target, attention_mask = self._gen_inputs(data)
                 output = self.model(inputs, attention_mask=attention_mask)
                 loss = self.criterion(output.view(-1, self.args.num_classes), target.view(-1))
-                dTP, dFP,dFN = self.metrics(output, target, attention_mask)
+                dTP, dFP, dFN = self.metrics(output, target, attention_mask)
                 TP += dTP
                 FP += dFP
                 FN += dFN
                 dev_losses += loss
-        return dev_losses / count , self.metrics.get_f1(TP,FP,FN)
+        return dev_losses / count, self.metrics.get_f1(TP, FP, FN, verbose=self.args.verbose)
 
     def run(self):
+        logger.info(f"\n>>>>>>>>>>>>>>>>>>>>>{datetime.now()}>>>>>>>>>>>>>>>>>>>>>>>>")
         for arg in vars(self.args):
             logger.info(f'>>> {arg}: {getattr(self.args, arg)}')
-
-        self.train_dataloader = DataLoader(E2EABSA_dataset(file_path=self.args.file_path['train'],
-                                                           tokenizer=self.tokenizer),
-                                           batch_size=self.args.batch_size,
-                                           shuffle=self.args.shuffle,
-                                           drop_last=True)
-        self.dev_dataloader = DataLoader(E2EABSA_dataset(file_path=self.args.file_path['dev'],
-                                                         tokenizer=self.tokenizer),
-                                         batch_size=self.args.batch_size,
-                                         shuffle=self.args.shuffle,
-                                         drop_last=True)
+        logger.info(f">>>class weight(or alpha) {self.weight}")
 
         for epoch in range(self.args.epochs + 1):
             self._train_epoch(epoch)
@@ -134,7 +142,7 @@ class Trainer(object):
         torch.save(self.model.state_dict(), path)
         logger.info(f'>> saved: {path}')
 
-    def _checkout(self, epoch,times):
+    def _checkout(self, epoch, times):
         train_loss = self.train_loss / self.args.step
         train_metrics = self.train_metric
         dev_loss, dev_metrics = self._dev_epoch()
@@ -144,7 +152,7 @@ class Trainer(object):
                     f"{self.metrics.name}: {train_metrics * 100:.2f}% "
                     f"dev loss: {dev_loss:.4f} "
                     f"{self.metrics.name}: {dev_metrics * 100:.2f}% "
-                    f"{(time.time()-times)/60} min")
+                    f"{(time.time() - times) / 60:.2f} min")
 
         if dev_metrics > self.max_val_acc:
             self.max_val_acc = dev_metrics
@@ -170,7 +178,8 @@ def main(args):
         'rmsprop': torch.optim.RMSprop,  # default lr=0.01
         'sgd': torch.optim.SGD,
     }
-
+    assert args.optimizer in list(optimizers.keys()), \
+        f"Optimizer only support {list(optimizers.keys())}"
     args.file_path = config.processed_data_path[args.mode]
     args.optimizer = optimizers[args.optimizer]
     args.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
