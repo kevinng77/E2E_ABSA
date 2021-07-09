@@ -3,26 +3,44 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 
+def compute_kl_loss(p, q):
+    # TODO
+    p_loss = F.kl_div(F.log_softmax(p, dim=-1), F.softmax(q, dim=-1), reduction='sum')
+    q_loss = F.kl_div(F.log_softmax(q, dim=-1), F.softmax(p, dim=-1), reduction='sum')
+    loss = (p_loss + q_loss) / 2  # 对称，相加，取平均
+    return loss
+
+
 class FocalLoss(nn.Module):
-    def __init__(self, class_num, alpha=None, gamma=2, size_average=True, device='cpu'):
+    def __init__(self,
+                 class_num,
+                 alpha=None,
+                 gamma=2,
+                 ignore_index=99,
+                 size_average=True,
+                 device='cpu'):
         super().__init__()
         self.gamma = gamma
         if alpha is None:
             self.alpha = torch.ones(class_num, 1).to(device)
         else:
-            if isinstance(alpha,torch.Tensor):
+            if isinstance(alpha, torch.Tensor):
                 self.alpha = alpha.to(device)
             else:
                 self.alpha = torch.tensor(alpha).to(device)
         assert self.alpha.shape[0] == class_num, \
             f"alpha shape {alpha.shape[0]} not match class number {class_num}"
         self.size_average = size_average
+        self.ignore_index = ignore_index
 
     def forward(self, inputs, targets):
         """
         inputs: [batch_size * len_seq, num_classes]
         outputs: [batch_size * len_seq,]
         """
+        padding_mask = targets != self.ignore_index
+        targets = targets[padding_mask]
+        inputs = inputs[padding_mask]
         alpha = self.alpha[targets.view(-1)]
         prob = F.softmax(inputs, dim=-1)
         mask = torch.zeros_like(prob)
@@ -31,7 +49,6 @@ class FocalLoss(nn.Module):
         losses = -alpha * (torch.pow(1 - prob, self.gamma)) * torch.log(prob)
         loss = losses.mean()
         return loss
-
 
 
 class Accuracy(object):

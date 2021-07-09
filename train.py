@@ -13,22 +13,16 @@ import sys
 from torch.utils.data import DataLoader
 from datetime import datetime
 from utils.metrics import Accuracy, F1, FocalLoss
+from utils.result_helper import init_logger
 from config import config
 import time
 
-logger = logging.getLogger()
-logger.setLevel(logging.INFO)
-if not os.path.exists(config.working_path + 'checkout'):
-    os.mkdir(config.working_path + 'checkout')
-handler = logging.FileHandler(config.working_path + "checkout/training_log.txt")
-handler.setLevel(logging.INFO)
-logger.addHandler(logging.StreamHandler(sys.stdout))
-logger.addHandler(handler)
+logger = init_logger(logging_folder=config.working_path + 'checkout',
+                     logging_file=config.working_path + "checkout/training_log.txt")
 
 
 class Trainer(object):
     def __init__(self, model, tokenizer, args):
-        # model init
         self.model = model
         self.tokenizer = tokenizer
         self.args = args
@@ -37,34 +31,33 @@ class Trainer(object):
         self.model = self.model.to(args.device)
         self.model_name = args.model_name
 
-        # training helper
         self.max_val_step = 0
         self.max_val_acc = 0
         self.train_metric = 0
         self.train_loss = 0
         self.step = 0
-        self.min_metrics = 0.5  # min metrics to save model
+        self.min_metrics = 0.59  # min metrics to save model
 
-        # training settings
         if args.loss == "CE":
-            self.weight = [1.1 for _ in range(self.args.num_classes)]
-            self.weight[0] = 7e-3  # Adam ok
+            self.weight = [1.0 for _ in range(self.args.num_classes)]
+            self.weight[0] = 7e-2  # Adam ok
+            self.weight[-4] = 1.1
             criterion_weight = torch.tensor(self.weight).to(self.args.device)
-            self.criterion = nn.CrossEntropyLoss(ignore_index=self.tokenizer.pad_token_id,
+            self.criterion = nn.CrossEntropyLoss(ignore_index=self.tokenizer.target_pad_token_id,
                                                  weight=criterion_weight)
         elif args.loss == "focal":
-            self.weight = [0.25 for _ in range(self.args.num_classes)]
+            self.weight = [args.alpha for _ in range(self.args.num_classes)]
             self.criterion = FocalLoss(class_num=args.num_classes,
                                        alpha=self.weight,
-                                       gamma=2,
-                                       device = args.device
-                                       )
+                                       gamma=args.gamma,
+                                       ignore_index=self.tokenizer.target_pad_token_id,
+                                       device=args.device)
         else:
             assert f"loss function {args.loss} not in 'CE' , 'focal"
         self.optimizer = self.args.optimizer(self.model.parameters(),
                                              lr=self.args.lr,
                                              weight_decay=self.args.l2reg)
-        if args.metrics == "f1":  # for future work, change metrics
+        if args.metrics == "f1":  # future work, change metrics
             self.metrics = F1(args.num_classes)
         else:
             assert "--metrics only support f1"
@@ -93,6 +86,8 @@ class Trainer(object):
         for data in self.train_dataloader:
             self.optimizer.zero_grad()
             inputs, target, attention_mask = self._gen_inputs(data)
+            # print(inputs[0])
+            # print(target[0])
             output = self.model(inputs, attention_mask=attention_mask)
             loss = self.criterion(output.view(-1, self.args.num_classes), target.view(-1))
             loss.backward()
@@ -103,6 +98,7 @@ class Trainer(object):
             FN += dFN
             self.train_loss += loss
             self.step += 1
+
             if self.step % self.args.step == 0:
                 self.train_metric = self.metrics.get_f1(TP, FP, FN)
                 self._checkout(epoch, time1)
@@ -130,26 +126,28 @@ class Trainer(object):
         return dev_losses / count, self.metrics.get_f1(TP, FP, FN, verbose=self.args.verbose)
 
     def run(self):
+        if not os.path.exists('checkout/state_dict'):
+            os.mkdir('checkout/state_dict')
+
         logger.info(f"\n>>>>>>>>>>>>>>>>>>>>>{datetime.now()}>>>>>>>>>>>>>>>>>>>>>>>>")
         for arg in vars(self.args):
             logger.info(f'>>> {arg}: {getattr(self.args, arg)}')
-        logger.info(f">>>class weight(or alpha) {self.weight}")
+        logger.info(f">>> class weight(or alpha) {self.weight}")
 
         for epoch in range(self.args.epochs + 1):
             self._train_epoch(epoch)
 
-        path = f'checkout/state_dict/{self.model_name}_val_final.pth'
+        path = f'checkout/state_dict/{self.model_name}_{self.args.mode}_final.pth'
         torch.save(self.model.state_dict(), path)
         logger.info(f'>> saved: {path}')
 
     def _checkout(self, epoch, times):
         train_loss = self.train_loss / self.args.step
-        train_metrics = self.train_metric
         dev_loss, dev_metrics = self._dev_epoch()
 
         logger.info(f"> Epoch: {epoch} Step: {self.step}, "
                     f"train loss: {train_loss:.4f} "
-                    f"{self.metrics.name}: {train_metrics * 100:.2f}% "
+                    f"{self.metrics.name}: {self.train_metric * 100:.2f}% "
                     f"dev loss: {dev_loss:.4f} "
                     f"{self.metrics.name}: {dev_metrics * 100:.2f}% "
                     f"{(time.time() - times) / 60:.2f} min")
@@ -157,12 +155,10 @@ class Trainer(object):
         if dev_metrics > self.max_val_acc:
             self.max_val_acc = dev_metrics
             if dev_metrics > self.min_metrics:
-                if not os.path.exists('checkout/state_dict'):
-                    os.mkdir('checkout/state_dict')
                 path = f'checkout/state_dict/{self.model_name}_' \
-                       f'val_{self.metrics.name}_{dev_metrics * 100:.2f}.pth'
+                       f'{self.args.mode}_{self.metrics.name}_{dev_metrics * 100:.2f}.pth'
                 torch.save(self.model.state_dict(), path)
-                logger.info(f'>> saved: {path}')
+                print(f'>> saved: {path}')
 
 
 def main(args):
@@ -180,7 +176,6 @@ def main(args):
     }
     assert args.optimizer in list(optimizers.keys()), \
         f"Optimizer only support {list(optimizers.keys())}"
-    args.file_path = config.processed_data_path[args.mode]
     args.optimizer = optimizers[args.optimizer]
     args.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
