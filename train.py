@@ -2,7 +2,7 @@ import argparse
 from transformers import BertModel
 import torch
 from torch.utils.data import Dataset
-from transformers import BertTokenizer
+from transformers import BertTokenizer, AdamW, get_linear_schedule_with_warmup
 import numpy as np
 import os
 from models.BERT_BASE import BERT
@@ -16,6 +16,7 @@ from utils.metrics import Accuracy, F1, FocalLoss
 from utils.result_helper import init_logger
 from config import config
 import time
+
 
 logger = init_logger(logging_folder=config.working_path + 'checkout',
                      logging_file=config.working_path + "checkout/training_log.txt")
@@ -36,7 +37,7 @@ class Trainer(object):
         self.train_metric = 0
         self.train_loss = 0
         self.step = 0
-        self.min_metrics = 0.59  # min metrics to save model
+        self.min_metrics = 0.58  # min metrics to save model
 
         if args.loss == "CE":
             self.weight = [1.0 for _ in range(self.args.num_classes)]
@@ -57,6 +58,10 @@ class Trainer(object):
         self.optimizer = self.args.optimizer(self.model.parameters(),
                                              lr=self.args.lr,
                                              weight_decay=self.args.l2reg)
+        self.scheduler = get_linear_schedule_with_warmup(self.optimizer,
+                                                         num_warmup_steps=args.warmup_steps,
+                                                         num_training_steps=3000)
+
         if args.metrics == "f1":  # future work, change metrics
             self.metrics = F1(args.num_classes)
         else:
@@ -173,16 +178,25 @@ def main(args):
         'asgd': torch.optim.ASGD,  # default lr=0.01
         'rmsprop': torch.optim.RMSprop,  # default lr=0.01
         'sgd': torch.optim.SGD,
+        'adamw':AdamW,
     }
+
     assert args.optimizer in list(optimizers.keys()), \
         f"Optimizer only support {list(optimizers.keys())}"
     args.optimizer = optimizers[args.optimizer]
     args.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-
-    print(f"> Loading bert model {args.pretrained_bert_name}")
-    tokenizer = Tokenizer(args.max_seq_len, args.pretrained_bert_name)
-    bert = BertModel.from_pretrained(args.pretrained_bert_name)
-    model = BERT(bert, args)
+    tokenizer = None
+    model = None
+    if args.model_name == "bert":
+        print(f"> Loading bert model {args.pretrained_bert_name}")
+        tokenizer = Tokenizer(args.max_seq_len, args.pretrained_bert_name)
+        bert = BertModel.from_pretrained(args.pretrained_bert_name)
+        model = BERT(bert, args)
+    elif args.model_name == "elmo":
+        # TODO add elmo model
+        pass
+    else:
+        assert f"model {args.model} not in bert, elmo "
     trainer = Trainer(model=model, tokenizer=tokenizer, args=args)
     trainer.run()
 

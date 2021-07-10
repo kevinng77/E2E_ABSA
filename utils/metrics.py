@@ -73,9 +73,8 @@ class Accuracy(object):
 
 def get_confusion_matrix(target, outputs, num_classes):
     """
-    ground_truth [batch,len_seq] torch.long
-    prediction [batch,len_seq,num_classes] torch.float
-
+    target [batch,len_seq] torch.long
+    outputs [batch,len_seq,num_classes] torch.float
     output [num_classes, num_classes]: the confusion matrix
     """
     outputs = torch.argmax(outputs.view(-1, num_classes), dim=-1)
@@ -93,19 +92,16 @@ class F1(object):
 
     def __call__(self, outputs, target, attention_mask):
         """
-        ground_truth [batch,len_seq] torch.long
-        prediction [batch,len_seq,num_classes] torch.float
+        outputs [batch,len_seq] torch.long
+        target [batch,len_seq,num_classes] torch.float
 
-        output [num_classes, num_classes]: the confusion matrix
-
-        outputs: macro F1
+        return : tp, fp, fn for all classes
         """
         mask = attention_mask == 1
         conf_mat = get_confusion_matrix(target[mask], outputs[mask], self.num_classes)  # confusion matrix
         TP = conf_mat.diagonal()
         FP = conf_mat.sum(1) - TP
         FN = conf_mat.sum(0) - TP
-
         return TP, FP, FN
 
     def get_f1(self, tp, fp, fn, verbose=False):
@@ -116,6 +112,7 @@ class F1(object):
             print("precision: ", precision)
             print("recall: ", recall)
 
+        # [1:] to ignore "O" precision and recall
         precision = precision[1:].mean()
         recall = recall[1:].mean()
 

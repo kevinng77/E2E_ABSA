@@ -4,6 +4,7 @@ from transformers import BertTokenizer
 import numpy as np
 import os
 
+
 class Tokenizer:
     def __init__(self, max_seq_len, pretrained_bert_name, pos_token=None, senti_token=None):
         self.bert_tokenizer = BertTokenizer.from_pretrained(pretrained_bert_name)
@@ -15,8 +16,8 @@ class Tokenizer:
         self.target_pad_token_id = 99
         vocab = {"O": 0, self.bert_tokenizer.pad_token: self.target_pad_token_id}
         token = 1
-        for pos in pos_token:
-            for senti in senti_token:
+        for senti in senti_token:
+            for pos in pos_token:
                 vocab[pos + "-" + senti] = token
                 token += 1
         self.vocab = vocab

@@ -30,11 +30,18 @@
 
 ## 预处理
 
+```python
+cd utils
+python processer.py --bpe  # process bert training file
+```
+
+
+
 运行`processer.py` 文件进行数据预处理 
 
 ## SemEval Official
 
-[2014](https://alt.qcri.org/semeval2016/task5/index.php?id=data-and-tools)
+[2016 task5](https://alt.qcri.org/semeval2016/task5/index.php?id=data-and-tools)
 
-[2016](https://alt.qcri.org/semeval2014/task4/index.php?id=data-and-tools)
+[2014 task4](https://alt.qcri.org/semeval2014/task4/index.php?id=data-and-tools)
 

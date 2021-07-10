@@ -14,6 +14,7 @@ from utils.result_helper import init_logger
 from torch.utils.data import DataLoader
 import logging
 import os
+from utils import result_helper
 
 
 def load_model():
@@ -37,20 +38,32 @@ def test():
                                  shuffle=False,
                                  drop_last=False)
     TP, FP, FN = 0, 0, 0
+    confusion = torch.zeros([4, 4], device=args.device)
+    aspect = torch.zeros([2, 2], device=args.device)
     with torch.no_grad():
         for data in test_dataloader:
             inputs = data["text_ids"].to(args.device)
             target = data["pred_ids"].to(args.device)
             attention_mask = data["att_mask"].to(args.device)
             output = model(inputs, attention_mask=attention_mask)
+            pred = torch.argmax(output,dim=-1).view(-1)
+            d_aspect,d_confusion = result_helper.gen_confusion_matrix(outputs=pred,
+                                                                      targets=target.view(-1))
+            aspect = aspect + d_aspect.to(args.device)
+            confusion = confusion + d_confusion.to(args.device)
+
             dTP, dFP, dFN = metrics(output, target, attention_mask)
             TP += dTP
             FP += dFP
             FN += dFN
 
-    score = metrics.get_f1(TP,FP,FN)
+    score = metrics.get_f1(TP, FP, FN)
+    f1_aspect,f1_polarity,f1_total = result_helper.gen_metrics(confusion)
     logger.info(f'{args.model_name}\t'
-                f'{args.mode}\t{metrics.name}\t{score * 100:.2f}')
+                f'{args.mode}\t{metrics.name}\t{score * 100:.2f}\t'
+                f'aspect {f1_aspect*100:.2f}%\t'
+                f'polarity {f1_polarity*100:.2f}%\t'
+                f'total {f1_total*100:.2f}%')
 
 
 def demo():
