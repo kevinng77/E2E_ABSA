@@ -86,9 +86,10 @@ def get_confusion_matrix(target, outputs, num_classes):
 
 
 class F1(object):
-    def __init__(self, num_classes):
+    def __init__(self, num_classes, type="macro"):
         self.name = "F1"
         self.num_classes = num_classes
+        self.type=type
 
     def __call__(self, outputs, target, attention_mask):
         """
@@ -105,22 +106,22 @@ class F1(object):
         return TP, FP, FN
 
     def get_f1(self, tp, fp, fn, verbose=False):
-        # macro average
-        precision = tp / (tp + fp + 1e-8)
-        recall = tp / (tp + fn + 1e-8)
-        if verbose:
-            print("precision: ", precision)
-            print("recall: ", recall)
+        if self.type == "macro":
+            precision = tp / (tp + fp + 1e-8)
+            recall = tp / (tp + fn + 1e-8)
+            if verbose:
+                print("precision: ", precision)
+                print("recall: ", recall)
 
-        # [1:] to ignore "O" precision and recall
-        precision = precision[1:].mean()
-        recall = recall[1:].mean()
-
-        # micro average
-        # TP = TP.sum()
-        # FP = FP.sum()
-        # FN = FN.sum()
-        # precision = TP / (TP + FP)
-        # recall = TP / (TP + FN)
+            # [1:] to ignore "O" precision and recall
+            precision = precision.mean()
+            recall = recall.mean()
+        else:
+            # micro average
+            TP = tp.sum()
+            FP = fp.sum()
+            FN = fn.sum()
+            precision = TP / (TP + FP)
+            recall = TP / (TP + FN)
 
         return 2 * precision * recall / (recall + precision + 1e-8)

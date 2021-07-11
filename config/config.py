@@ -2,7 +2,7 @@ import argparse
 parser = argparse.ArgumentParser()
 
 # Preprocessing
-parser.add_argument('--max_seq_len', type=int, default=96)
+parser.add_argument('--max_seq_len', type=int, default=128)
 parser.add_argument('--pretrained_bert_name', type=str, default='bert-base-uncased',
                     help='bert-base-uncased')
 parser.add_argument('--split_ratio', type=float, nargs='+',
@@ -15,10 +15,12 @@ parser.add_argument("--l2reg", type=float, default=2e-5)
 parser.add_argument("--num_classes", type=int, default=10)
 parser.add_argument("--batch_size", type=int, default=32)
 parser.add_argument("--lr", type=float, default=2e-5)
-parser.add_argument("--epochs", type=int, default=100)
-parser.add_argument("--step", type=int, default=200,
+parser.add_argument("--epochs", type=int, default=50)
+parser.add_argument("--step", type=int, default=100,
                     help="checkout for each _ number of training step")
-parser.add_argument("--model_name",type=str,default='bert')
+parser.add_argument("--model_name",type=str,default='bert',help="bert, elmo")
+parser.add_argument("--downstream",type=str,default="linear",
+                    help="linear, crf, lstm, ")
 
 #  training param
 parser.add_argument("--optimizer", type=str, default="adam")
@@ -27,13 +29,13 @@ parser.add_argument("--gamma",type=float,default=2.0,help="gamma for focal loss"
 parser.add_argument("--alpha",type=float,default=1.0,help="alpha for focal loss")
 parser.add_argument("--shuffle", action='store_true', default=False)
 parser.add_argument("--load_model", action='store_true', default=False)
-parser.add_argument("--state_dict_path", type=str, default="bert_res14_F1_60.25.pth")
+parser.add_argument("--state_dict_path", type=str, default="bert_res14_F1_59.03.pth")
 parser.add_argument("--seed", type=int, default=7)
 parser.add_argument("--metrics",type=str,default="f1",help="f1 or acc")
 parser.add_argument("--verbose", action='store_true', default=False)
-
+parser.add_argument("--warmup_steps",type=int,default=0)
 # path
-parser.add_argument('--working_path', type=str, default="/home/kevin/nut/1_project/absa/",)
+parser.add_argument('--working_path', type=str, default="./",)
 parser.add_argument('--mode',type=str,default="debug",help="res14, res16, lap14 or debug")
 
 # test or demo

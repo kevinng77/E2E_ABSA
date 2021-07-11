@@ -59,6 +59,9 @@ def process_string(s, remove_stop=False, args=config.args):
 
 def gen_data(xml_file, output_train, output_dev, output_test,
              train_tokenizer=None, args=config.args):
+    """
+    output:
+    """
     logger.info(f">>> processing {xml_file} .")
     DOMTree = xml.dom.minidom.parse(xml_file)
     collection = DOMTree.documentElement
@@ -130,10 +133,9 @@ def gen_data(xml_file, output_train, output_dev, output_test,
 
 def main(max_seq_len, pretrained_bert_name, args):
     train_tokenizer = None
-    if args.bpe:
+    if args.model_name == "bert":
         if max_seq_len and pretrained_bert_name:
             train_tokenizer = Tokenizer(max_seq_len, pretrained_bert_name)
-    # 14 res
     for file_type in ['res14', 'res16', 'lap14']:
         gen_data(xml_file=config.raw_data_path[file_type],
                  output_train=config.processed_data_path[file_type]['train'],
@@ -148,5 +150,5 @@ if __name__ == "__main__":
     args = config.args
     assert len(args.split_ratio) == 3, \
         "split ratio for train, dev, test are all require."
-    random.seed(7)
+    random.seed(args.seed)
     main(args.max_seq_len, args.pretrained_bert_name, args)

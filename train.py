@@ -37,7 +37,9 @@ class Trainer(object):
         self.train_metric = 0
         self.train_loss = 0
         self.step = 0
+        self.time = 0
         self.min_metrics = 0.58  # min metrics to save model
+
 
         if args.loss == "CE":
             self.weight = [1.0 for _ in range(self.args.num_classes)]
@@ -87,7 +89,6 @@ class Trainer(object):
     def _train_epoch(self, epoch):
         self.model.train()
         TP, FP, FN = 0, 0, 0
-        time1 = time.time()
         for data in self.train_dataloader:
             self.optimizer.zero_grad()
             inputs, target, attention_mask = self._gen_inputs(data)
@@ -106,8 +107,8 @@ class Trainer(object):
 
             if self.step % self.args.step == 0:
                 self.train_metric = self.metrics.get_f1(TP, FP, FN)
-                self._checkout(epoch, time1)
-                time1 = time.time()
+                self._checkout(epoch)
+                self.time = time.time()
                 self.train_loss, self.train_metric = 0, 0
                 TP, FP, FN = 0, 0, 0
                 self.model.train()
@@ -139,6 +140,7 @@ class Trainer(object):
             logger.info(f'>>> {arg}: {getattr(self.args, arg)}')
         logger.info(f">>> class weight(or alpha) {self.weight}")
 
+        self.time = time.time()
         for epoch in range(self.args.epochs + 1):
             self._train_epoch(epoch)
 
@@ -146,7 +148,7 @@ class Trainer(object):
         torch.save(self.model.state_dict(), path)
         logger.info(f'>> saved: {path}')
 
-    def _checkout(self, epoch, times):
+    def _checkout(self, epoch):
         train_loss = self.train_loss / self.args.step
         dev_loss, dev_metrics = self._dev_epoch()
 
@@ -155,7 +157,7 @@ class Trainer(object):
                     f"{self.metrics.name}: {self.train_metric * 100:.2f}% "
                     f"dev loss: {dev_loss:.4f} "
                     f"{self.metrics.name}: {dev_metrics * 100:.2f}% "
-                    f"{(time.time() - times) / 60:.2f} min")
+                    f"{(time.time() - self.time) / 60:.2f} min")
 
         if dev_metrics > self.max_val_acc:
             self.max_val_acc = dev_metrics

@@ -52,15 +52,16 @@ def test():
             aspect = aspect + d_aspect.to(args.device)
             confusion = confusion + d_confusion.to(args.device)
 
-            dTP, dFP, dFN = metrics(output, target, attention_mask)
-            TP += dTP
-            FP += dFP
-            FN += dFN
-
-    score = metrics.get_f1(TP, FP, FN)
+    #         dTP, dFP, dFN = metrics(output, target, attention_mask)
+    #         TP += dTP
+    #         FP += dFP
+    #         FN += dFN
+    #
+    # score = metrics.get_f1(TP, FP, FN)
+    # print(f"{score * 100:.2f}")  # for debug
     f1_aspect,f1_polarity,f1_total = result_helper.gen_metrics(confusion)
     logger.info(f'{args.model_name}\t'
-                f'{args.mode}\t{metrics.name}\t{score * 100:.2f}\t'
+                f'{args.mode}\t{metrics.name}\t'
                 f'aspect {f1_aspect*100:.2f}%\t'
                 f'polarity {f1_polarity*100:.2f}%\t'
                 f'total {f1_total*100:.2f}%')
@@ -82,7 +83,7 @@ def demo():
             inputs = torch.tensor(token_list).view(1, -1).to(args.device)
             print(tokenizer.ids_to_tokens(token_list))
             outputs = model(input_ids=inputs, attention_mask=attention_mask)
-            print(torch.argmax(outputs, dim=-1).cpu().numpy())
+            # print(torch.argmax(outputs, dim=-1).cpu().numpy())
             outputs = torch.masked_select(torch.argmax(outputs, dim=-1),
                                           attention_mask == 1).cpu().numpy()
             pred = tokenizer.ids_to_tokens(outputs, is_target=True)
