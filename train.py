@@ -16,7 +16,7 @@ from utils.metrics import Accuracy, F1, FocalLoss
 from utils.result_helper import init_logger
 from config import config
 import time
-
+from models.downstream import SelfAttention
 
 logger = init_logger(logging_folder=config.working_path + 'checkout',
                      logging_file=config.working_path + "checkout/training_log.txt")

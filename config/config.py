@@ -22,6 +22,10 @@ parser.add_argument("--model_name",type=str,default='bert',help="bert, elmo")
 parser.add_argument("--downstream",type=str,default="linear",
                     help="linear, crf, lstm, ")
 
+# downstream attention heads
+parser.add_argument("--num_heads",type=int,default=12)
+
+
 #  training param
 parser.add_argument("--optimizer", type=str, default="adam")
 parser.add_argument("--loss",type=str,default="CE",help="'CE' or 'focal")
