@@ -1,11 +1,9 @@
 import torch.nn as nn
 import torch
 from transformers import BertModel
+from models.downstream import SelfAttention,LSTM
 import sys
 sys.path.append("..")
-from models.downstream import SelfAttention
-
-# embedding:
 
 
 class BERT(nn.Module):
@@ -19,8 +17,12 @@ class BERT(nn.Module):
         if args.downstream == "linear":
             pass
         elif args.downstream == "lstm":
-            pass
-            # todo ADD LSTM
+            self.downstream = LSTM(
+                d_model=self.d_model,
+                hidden_dim= self.d_model,
+                num_layers= args.num_layers,
+                args=args
+            )
         elif args.downstream == "self_attention":
             self.downstream = SelfAttention(d_model=self.d_model,
                                             num_heads=args.num_heads,
@@ -43,15 +45,13 @@ class BERT(nn.Module):
         # ignore pooling
         outputs = self.dropout(outputs)
         if self.downstream == "self_attention":
-            outputs = outputs.transpose(0,1)  # to: (len_seq, batch_size, d_model)
+            outputs = outputs.transpose(0, 1)  # to: (len_seq, batch_size, d_model)
             outputs = self.downstream(outputs, key_padding_mask=attention_mask)
             outputs = outputs.transpose(0, 1)
         elif self.downstream == "lstm":
-            pass
-            # TODO
+            outputs = self.downstream(outputs)
         elif self.downstream == "crf":
             pass
             # TODO
         final_outputs = self.classifier(outputs)
         return final_outputs
-

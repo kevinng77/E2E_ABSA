@@ -3,11 +3,18 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 
-def compute_kl_loss(p, q):
-    # TODO
+def compute_kl_loss(p, q, pad_mask=None):
+    if pad_mask is not None:
+        q = q[pad_mask != 0]
+        p = p[pad_mask != 0]
+
+    # 官方的r-drop针对序列模型提供的方法为对两次序列中对应的单词计算kl损失
+    # 类似于局部与局部的对比学习与数据增强
+    # TODO 考虑整个句子的对比学习增强
     p_loss = F.kl_div(F.log_softmax(p, dim=-1), F.softmax(q, dim=-1), reduction='sum')
     q_loss = F.kl_div(F.log_softmax(q, dim=-1), F.softmax(p, dim=-1), reduction='sum')
-    loss = (p_loss + q_loss) / 2  # 对称，相加，取平均
+
+    loss = (p_loss + q_loss) / 2
     return loss
 
 

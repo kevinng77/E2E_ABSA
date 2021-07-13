@@ -24,7 +24,7 @@ parser.add_argument("--downstream",type=str,default="linear",
 
 # downstream attention heads
 parser.add_argument("--num_heads",type=int,default=12)
-
+parser.add_argument("--num_layers",type=int,default=1)
 
 #  training param
 parser.add_argument("--optimizer", type=str, default="adam")

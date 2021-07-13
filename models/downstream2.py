@@ -21,23 +21,17 @@ class SelfAttention(nn.Module):
 
 
 class LSTM(nn.Module):
-    def __init__(self, d_model, hidden_dim, num_layers, args):
+    def __init__(self, d_model, hidden_dim, layer_dim, output_dim):
         super(LSTM, self).__init__()
         self.hidden_dim = hidden_dim
-        self.layer_dim = num_layers
-        self.lstm = nn.LSTM(input_size=d_model, hidden_size=hidden_dim, num_layers=num_layers, batch_first=True)
-        # （batch_size,seq_len,input_size)
-        # self.fc = nn.Linear(hidden_dim, output_dim)
-        self.h0 = torch.zeros(self.layer_dim, args.batch_size, self.hidden_dim).requires_grad_().to(args.device)
-        self.c0 = torch.zeros(self.layer_dim, args.batch_size, self.hidden_dim).requires_grad_().to(args.device)
-
+        self.layer_dim = layer_dim
+        self.lstm = nn.LSTM(d_model, hidden_dim, layer_dim, batch_first=True)# （batch_size,seq_len,input_size)
+        self.fc = nn.Linear(hidden_dim, output_dim)
     def forward(self, x):
-        out, (hn, cn) = self.lstm(x, (self.h0.detach(), self.c0.detach()))
+        h0 = torch.zeros(self.layer_dim, x.size(0), self.hidden_dim).requires_grad_().to(device)
+        c0 = torch.zeros(self.layer_dim, x.size(0), self.hidden_dim).requires_grad_().to(device)
+        out, (hn, cn) = self.lstm(x, (h0.detach(), c0.detach()))
         # out-->(batch_size,seq_len,hidden_size)
-        # out[:, -1, :] --> just want last time step hidden states!
-        # out = self.fc(out[:, -1, :])
+        # out[:, -1, :] --> just want last time step hidden states! 
+        # out = self.fc(out[:, -1, :]) 
         return out
-
-
-class CRF(nn.Module):
-    pass
