@@ -24,17 +24,24 @@ class SelfAttention(nn.Module):
 
 class LSTM(nn.Module):
     def __init__(self, d_model, hidden_dim, num_layers, args):
+        """
+        hidden_dim: 768, output hidden dimension. 768/2 for each direction.
+        """
         super(LSTM, self).__init__()
-        self.hidden_dim = hidden_dim
-        self.layer_dim = num_layers
-        self.lstm = nn.LSTM(input_size=d_model, hidden_size=hidden_dim, num_layers=num_layers, batch_first=True)
+        self.hidden_dim = int(hidden_dim/2)
+        self.num_layers = num_layers
+        self.lstm = nn.LSTM(input_size=d_model,
+                            hidden_size=self.hidden_dim,
+                            num_layers=num_layers,
+                            bidirectional=True,
+                            batch_first=True)
         # （batch_size,seq_len,input_size)
 
         self.device = args.device
 
     def forward(self, x):
-        h0 = torch.zeros(self.layer_dim, x.size(0), self.hidden_dim).to(self.device)
-        c0 = torch.zeros(self.layer_dim, x.size(0), self.hidden_dim).to(self.device)
+        h0 = torch.zeros(self.num_layers*2, x.size(0), self.hidden_dim).to(self.device)
+        c0 = torch.zeros(self.num_layers*2, x.size(0), self.hidden_dim).to(self.device)
         out, _ = self.lstm(x, (h0, c0))
         return out
 

@@ -30,7 +30,7 @@ def load_model():
 def test():
     model, tokenizer, args = load_model()
     model.eval()
-    metrics = F1(num_classes=args.num_classes,downstream=args.downstream)
+    metrics = F1(num_classes=args.num_classes, downstream=args.downstream)
     torch.autograd.set_grad_enabled(False)
     test_dataloader = DataLoader(E2EABSA_dataset(file_path=args.file_path['test'],
                                                  tokenizer=tokenizer),
@@ -49,7 +49,7 @@ def test():
 
             if args.downstream != "crf":
                 output = model(inputs, attention_mask=attention_mask)
-                pred = torch.argmax(output,dim=-1).view(-1)
+                pred = torch.argmax(output, dim=-1).view(-1)
             else:
                 _, logits = model(inputs, attention_mask=attention_mask, labels=target)
                 output = model.downstream.viterbi_tags(logits=logits, mask=attention_mask)
@@ -58,19 +58,20 @@ def test():
                           for x in output]
                 pred = torch.tensor(output, dtype=torch.long, device=args.device).view(-1)
 
-            d_aspect,d_confusion,d_broken = result_helper.gen_confusion_matrix(outputs=pred,
-                                                                      targets=target.view(-1))
+            d_aspect, d_confusion, d_broken = result_helper.gen_confusion_matrix(outputs=pred,
+                                                                                 targets=target.view(-1))
             aspect = aspect + d_aspect.to(args.device)
             confusion = confusion + d_confusion.to(args.device)
             broken += d_broken
 
-    f1_aspect,f1_polarity,f1_total = result_helper.gen_metrics(confusion)
+    f1_aspect, f1_polarity, f1_total = result_helper.gen_metrics(confusion)
     logger.info(f'{model.model_name}\t'
                 f'{args.mode}\t{metrics.name}\t'
-                f'aspect {f1_aspect*100:.2f}%\t'
-                f'polarity {f1_polarity*100:.2f}%\t'
-                f'total {f1_total*100:.2f}%\t'
-                f'number of broken prediction {broken}')
+                f'aspect {f1_aspect * 100:.2f}%\t'
+                f'polarity {f1_polarity * 100:.2f}%\t'
+                f'total {f1_total * 100:.2f}%\t'
+                f'number of broken prediction {broken}\t'
+                f'seed {args.seed}')
 
 
 def demo():
@@ -99,7 +100,6 @@ def demo():
                 outputs = torch.tensor(output, dtype=torch.long, device=args.device).view(-1).cpu().numpy()
             pred = tokenizer.ids_to_tokens(outputs, is_target=True)
             print(pred)
-
 
 
 if __name__ == "__main__":

@@ -12,11 +12,10 @@ import logging
 import sys
 from torch.utils.data import DataLoader
 from datetime import datetime
-from utils.metrics import Accuracy, F1, FocalLoss
+from utils.metrics import F1, FocalLoss
 from utils.result_helper import init_logger
 from config import config
 import time
-from models.downstream import SelfAttention
 
 logger = init_logger(logging_folder=config.working_path + 'checkout',
                      logging_file=config.working_path + "checkout/training_log.txt")
@@ -38,11 +37,11 @@ class Trainer(object):
         self.train_loss = 0
         self.step = 0
         self.time = 0
-        self.min_metrics = 0.58  # min metrics to save model
+        self.min_metrics = 0.58  # min F1 metrics to save model
 
         if args.loss == "CE":
             self.weight = [1.0 for _ in range(self.args.num_classes)]
-            self.weight[0] = 7e-2  # Adam ok
+            self.weight[0] = 7e-2  # Adam test good
             self.weight[-4] = 1.1
             criterion_weight = torch.tensor(self.weight).to(self.args.device)
             self.criterion = nn.CrossEntropyLoss(ignore_index=self.tokenizer.target_pad_token_id,
@@ -55,18 +54,18 @@ class Trainer(object):
                                        ignore_index=self.tokenizer.target_pad_token_id,
                                        device=args.device)
         else:
-            assert f"loss function {args.loss} not in 'CE' , 'focal"
+            assert f"loss function {args.loss} only implement 'CE' , 'focal"
         self.optimizer = self.args.optimizer(self.model.parameters(),
                                              lr=self.args.lr,
-                                             weight_decay=self.args.l2reg)
+                                             weight_decay=self.args.weight_decay)
         self.scheduler = get_linear_schedule_with_warmup(self.optimizer,
                                                          num_warmup_steps=args.warmup_steps,
-                                                         num_training_steps=3000)
+                                                         num_training_steps=args.max_steps)
 
         if args.metrics == "f1":  # future work, change metrics
-            self.metrics = F1(args.num_classes,downstream=args.downstream)
+            self.metrics = F1(args.num_classes, downstream=args.downstream)
         else:
-            assert "--metrics only support f1"
+            assert "--metrics only implement f1"
 
         self.dev_dataloader = DataLoader(E2EABSA_dataset(file_path=self.args.file_path['dev'],
                                                          tokenizer=self.tokenizer),
@@ -91,18 +90,17 @@ class Trainer(object):
         for data in self.train_dataloader:
             self.optimizer.zero_grad()
             inputs, target, attention_mask = self._gen_inputs(data)
-            # print("targets",target[:16,:7])
             if self.model_name.endswith('crf'):
                 loss, logits = self.model(inputs, attention_mask=attention_mask, labels=target)
-                loss = loss/self.args.batch_size
+                loss = loss / self.args.batch_size
                 output = self.model.downstream.viterbi_tags(logits=logits, mask=attention_mask)
-                # padding outputs
-                output = [x + [self.tokenizer.target_pad_token_id]* (self.args.max_seq_len - len(x))
-                           for x in output]
-                output = torch.tensor(output,dtype=torch.long,device=self.args.device)
+                output = [x + [self.tokenizer.target_pad_token_id] * (self.args.max_seq_len - len(x))
+                          for x in output]
+                output = torch.tensor(output, dtype=torch.long, device=self.args.device)
             else:
                 output = self.model(inputs, attention_mask=attention_mask)
                 loss = self.criterion(output.view(-1, self.args.num_classes), target.view(-1))
+
             loss.backward()
             dTP, dFP, dFN = self.metrics(output, target, attention_mask)
             TP += dTP
@@ -110,11 +108,11 @@ class Trainer(object):
             FN += dFN
 
             self.optimizer.step()
+            self.scheduler.step()
             self.train_loss += loss
             self.step += 1
 
             if self.step % self.args.step == 0:
-                print("start eval")
                 self.train_metric = self.metrics.get_f1(TP, FP, FN)
                 self._checkout(epoch)
                 self.time = time.time()
@@ -162,6 +160,8 @@ class Trainer(object):
         self.time = time.time()
         for epoch in range(self.args.epochs + 1):
             self._train_epoch(epoch)
+            if self.step > self.args.max_steps:
+                break
 
         path = f'checkout/state_dict/{self.model_name}_{self.args.mode}_final.pth'
         torch.save(self.model.state_dict(), path)
@@ -182,7 +182,7 @@ class Trainer(object):
             self.max_val_acc = dev_metrics
             if dev_metrics > self.min_metrics:
                 path = f'checkout/state_dict/{self.model_name}_' \
-                       f'{self.args.mode}_{self.metrics.name}_{dev_metrics * 100:.2f}.pth'
+                       f'{self.args.mode}_seed{self.args.seed}.pth'
                 torch.save(self.model.state_dict(), path)
                 print(f'>> saved: {path}')
 
@@ -199,7 +199,7 @@ def main(args):
         'asgd': torch.optim.ASGD,  # default lr=0.01
         'rmsprop': torch.optim.RMSprop,  # default lr=0.01
         'sgd': torch.optim.SGD,
-        'adamw':AdamW,
+        'adamw': AdamW,
     }
 
     assert args.optimizer in list(optimizers.keys()), \
