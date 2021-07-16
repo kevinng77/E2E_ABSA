@@ -88,12 +88,18 @@ def demo():
                 [1 if x != 0 else 0 for x in token_list]).view(1, -1).to(args.device)
             inputs = torch.tensor(token_list).view(1, -1).to(args.device)
             print(tokenizer.ids_to_tokens(token_list))
-            outputs = model(input_ids=inputs, attention_mask=attention_mask)
-            # print(torch.argmax(outputs, dim=-1).cpu().numpy())
-            outputs = torch.masked_select(torch.argmax(outputs, dim=-1),
-                                          attention_mask == 1).cpu().numpy()
+
+            if args.downstream != "crf":
+                outputs = model(inputs, attention_mask=attention_mask)
+                outputs = torch.masked_select(torch.argmax(outputs, dim=-1),
+                                              attention_mask == 1).cpu().numpy()
+            else:
+                _, logits = model(inputs, attention_mask=attention_mask, labels=attention_mask)
+                output = model.downstream.viterbi_tags(logits=logits, mask=attention_mask)
+                outputs = torch.tensor(output, dtype=torch.long, device=args.device).view(-1).cpu().numpy()
             pred = tokenizer.ids_to_tokens(outputs, is_target=True)
             print(pred)
+
 
 
 if __name__ == "__main__":
@@ -102,5 +108,4 @@ if __name__ == "__main__":
     else:
         logger = init_logger(logging_folder=config.working_path + 'checkout',
                              logging_file=config.working_path + "checkout/test_log.txt")
-
         test()

@@ -3,7 +3,6 @@ import torch
 from transformers import BertModel
 from models.downstream import SelfAttention, LSTM, CRF
 import sys
-
 sys.path.append("..")
 
 
