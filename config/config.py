@@ -2,7 +2,7 @@ import argparse
 parser = argparse.ArgumentParser()
 
 # Preprocessing
-parser.add_argument('--max_seq_len', type=int, default=128)
+parser.add_argument('--max_seq_len', type=int, default=96)
 parser.add_argument('--pretrained_bert_name', type=str, default='bert-base-uncased',
                     help='bert-base-uncased')
 parser.add_argument('--split_ratio', type=float, nargs='+',

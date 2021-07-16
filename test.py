@@ -30,41 +30,47 @@ def load_model():
 def test():
     model, tokenizer, args = load_model()
     model.eval()
-    metrics = F1(num_classes=args.num_classes)
+    metrics = F1(num_classes=args.num_classes,downstream=args.downstream)
     torch.autograd.set_grad_enabled(False)
     test_dataloader = DataLoader(E2EABSA_dataset(file_path=args.file_path['test'],
                                                  tokenizer=tokenizer),
                                  batch_size=args.batch_size,
                                  shuffle=False,
                                  drop_last=False)
-    TP, FP, FN = 0, 0, 0
+
     confusion = torch.zeros([4, 4], device=args.device)
     aspect = torch.zeros([2, 2], device=args.device)
+    broken = 0
     with torch.no_grad():
         for data in test_dataloader:
             inputs = data["text_ids"].to(args.device)
             target = data["pred_ids"].to(args.device)
             attention_mask = data["att_mask"].to(args.device)
-            output = model(inputs, attention_mask=attention_mask)
-            pred = torch.argmax(output,dim=-1).view(-1)
-            d_aspect,d_confusion = result_helper.gen_confusion_matrix(outputs=pred,
+
+            if args.downstream != "crf":
+                output = model(inputs, attention_mask=attention_mask)
+                pred = torch.argmax(output,dim=-1).view(-1)
+            else:
+                _, logits = model(inputs, attention_mask=attention_mask, labels=target)
+                output = model.downstream.viterbi_tags(logits=logits, mask=attention_mask)
+                # padding outputs
+                output = [x + [tokenizer.target_pad_token_id] * (args.max_seq_len - len(x))
+                          for x in output]
+                pred = torch.tensor(output, dtype=torch.long, device=args.device).view(-1)
+
+            d_aspect,d_confusion,d_broken = result_helper.gen_confusion_matrix(outputs=pred,
                                                                       targets=target.view(-1))
             aspect = aspect + d_aspect.to(args.device)
             confusion = confusion + d_confusion.to(args.device)
+            broken += d_broken
 
-    #         dTP, dFP, dFN = metrics(output, target, attention_mask)
-    #         TP += dTP
-    #         FP += dFP
-    #         FN += dFN
-    #
-    # score = metrics.get_f1(TP, FP, FN)
-    # print(f"{score * 100:.2f}")  # for debug
     f1_aspect,f1_polarity,f1_total = result_helper.gen_metrics(confusion)
-    logger.info(f'{args.model_name}\t'
+    logger.info(f'{model.model_name}\t'
                 f'{args.mode}\t{metrics.name}\t'
                 f'aspect {f1_aspect*100:.2f}%\t'
                 f'polarity {f1_polarity*100:.2f}%\t'
-                f'total {f1_total*100:.2f}%')
+                f'total {f1_total*100:.2f}%\t'
+                f'number of broken prediction {broken}')
 
 
 def demo():

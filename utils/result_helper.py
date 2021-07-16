@@ -40,34 +40,40 @@ def gen_confusion_matrix(outputs, targets, ignore_index=99):
     aspect = torch.zeros([2, 2])
     confusion = torch.zeros([4, 4])
     i = 0
+    broken = 0
     mask = targets != ignore_index
     outputs = outputs[mask]
     targets = targets[mask]
     while i < len(targets):
         if targets[i] == 0:
-            # 对于非目标词，忽略情感分析的结果
             aspect[1 - (outputs[i] == 0).int(), 0] += 1
             confusion[(outputs[i] - 1).item() // 3 + 1, 0] += 1
             i += 1
         else:
+            # 检测到target的目标词开头
             start = i
             target_senti = targets[start] // 3  # 1-pos, 2-neg, 3-neu
             while targets[i] != 0:
                 i += 1
             end = i
+
             if torch.all(outputs[start:end] == targets[start:end]):
+                # 预测与target的情感和提取编码完全一致
                 aspect[1, 1] += 1
                 confusion[target_senti + 1, target_senti + 1] += 1
 
             elif torch.all(((-outputs[start:end] + targets[start:end]) % 3) == 0):
+                # 抓取词正确，情感预测一致，但是情感预测错了
                 aspect[1, 1] += 1
                 pred_senti = outputs[start] // 3
                 confusion[pred_senti + 1, target_senti + 1] += 1
-                # 抓取词正确，情感预测一致，但是情感预测错了
             else:
+                # 情感词不一致，或者抓取不完整
                 confusion[0, target_senti + 1] += 1
                 aspect[0, 1] += 1
-    return aspect, confusion
+                if torch.all(targets[start:end]!=0):
+                    broken += 1  # 词抓取到，但是情感不一致
+    return aspect, confusion, broken
 
 
 def init_logger(logging_folder, logging_file):

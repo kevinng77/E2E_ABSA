@@ -1,8 +1,9 @@
 import torch.nn as nn
 import torch
 from transformers import BertModel
-from models.downstream import SelfAttention,LSTM
+from models.downstream import SelfAttention, LSTM, CRF
 import sys
+
 sys.path.append("..")
 
 
@@ -12,15 +13,19 @@ class BERT(nn.Module):
         self.bert = bert
         self.d_model = bert.config.hidden_size
         self.dropout = nn.Dropout(args.dropout)
-        self.downstream = args.downstream
+        self.ds_name = args.downstream
         self.classifier = nn.Linear(self.d_model, args.num_classes)
+        self.model_name = f"{args.model_name}-{args.downstream}"
+        assert args.downstream in ['linear', 'lstm', "self_attention", "crf"], \
+            f"downstream model {args.downstream} not in linear, lstm, self_attention or crf"
+
         if args.downstream == "linear":
             pass
         elif args.downstream == "lstm":
             self.downstream = LSTM(
                 d_model=self.d_model,
-                hidden_dim= self.d_model,
-                num_layers= args.num_layers,
+                hidden_dim=self.d_model,
+                num_layers=args.num_layers,
                 args=args
             )
         elif args.downstream == "self_attention":
@@ -28,12 +33,10 @@ class BERT(nn.Module):
                                             num_heads=args.num_heads,
                                             dropout=args.dropout)
         elif args.downstream == "crf":
-            pass
-            # TODO
-        else:
-            assert f"downstream model {args.downstream} not in linear, lstm, self_attention or crf"
+            self.downstream = CRF(num_tags=args.num_classes,
+                                  include_start_end_transitions=True)
 
-    def forward(self, input_ids, attention_mask=None, token_type_ids=None):
+    def forward(self, input_ids, attention_mask=None, token_type_ids=None, labels=None):
         """
         attention_mask:
             mask on padding position to avoid attention.
@@ -44,14 +47,19 @@ class BERT(nn.Module):
                                token_type_ids=token_type_ids)  # segment id
         # ignore pooling
         outputs = self.dropout(outputs)
-        if self.downstream == "self_attention":
-            outputs = outputs.transpose(0, 1)  # to: (len_seq, batch_size, d_model)
-            outputs = self.downstream(outputs, key_padding_mask=attention_mask)
+        if self.ds_name == "self_attention":
+            # to: (len_seq, batch_size, d_model)
+            outputs = self.downstream(outputs.transpose(0, 1), key_padding_mask=(attention_mask == 1))
             outputs = outputs.transpose(0, 1)
-        elif self.downstream == "lstm":
+        elif self.ds_name == "lstm":
             outputs = self.downstream(outputs)
-        elif self.downstream == "crf":
-            pass
-            # TODO
-        final_outputs = self.classifier(outputs)
-        return final_outputs
+
+        outputs = self.classifier(outputs)
+
+        if self.ds_name == 'crf':
+            loss = -self.downstream(inputs=outputs,
+                                     tags=labels,
+                                     mask=attention_mask)
+            return loss, outputs
+        else:
+            return outputs

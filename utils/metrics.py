@@ -78,13 +78,14 @@ class Accuracy(object):
         return acc.item()
 
 
-def get_confusion_matrix(target, outputs, num_classes):
+def get_confusion_matrix(target, outputs, num_classes, is_logit=True):
     """
     target [batch,len_seq] torch.long
     outputs [batch,len_seq,num_classes] torch.float
     output [num_classes, num_classes]: the confusion matrix
     """
-    outputs = torch.argmax(outputs.view(-1, num_classes), dim=-1)
+    if is_logit:
+        outputs = torch.argmax(outputs.view(-1, num_classes), dim=-1)
     indices_1d = outputs * num_classes + target.view(-1, )
     temp = torch.zeros(num_classes ** 2)
     indices_1d = indices_1d.bincount(minlength=num_classes)
@@ -93,10 +94,11 @@ def get_confusion_matrix(target, outputs, num_classes):
 
 
 class F1(object):
-    def __init__(self, num_classes, type="macro"):
+    def __init__(self, num_classes, downstream, type="macro"):
         self.name = "F1"
         self.num_classes = num_classes
-        self.type=type
+        self.type = type
+        self.ds_name = downstream
 
     def __call__(self, outputs, target, attention_mask):
         """
@@ -106,7 +108,9 @@ class F1(object):
         return : tp, fp, fn for all classes
         """
         mask = attention_mask == 1
-        conf_mat = get_confusion_matrix(target[mask], outputs[mask], self.num_classes)  # confusion matrix
+        conf_mat = get_confusion_matrix(target[mask], outputs[mask],
+                                        num_classes=self.num_classes,
+                                        is_logit=self.ds_name!='crf')  # confusion matrix
         TP = conf_mat.diagonal()
         FP = conf_mat.sum(1) - TP
         FN = conf_mat.sum(0) - TP

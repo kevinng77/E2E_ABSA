@@ -30,7 +30,7 @@ class Trainer(object):
         if args.load_model:
             self.model.load_state_dict(torch.load(args.state_dict_path))
         self.model = self.model.to(args.device)
-        self.model_name = args.model_name
+        self.model_name = f"{args.model_name}-{args.downstream}"
 
         self.max_val_step = 0
         self.max_val_acc = 0
@@ -39,7 +39,6 @@ class Trainer(object):
         self.step = 0
         self.time = 0
         self.min_metrics = 0.58  # min metrics to save model
-
 
         if args.loss == "CE":
             self.weight = [1.0 for _ in range(self.args.num_classes)]
@@ -65,7 +64,7 @@ class Trainer(object):
                                                          num_training_steps=3000)
 
         if args.metrics == "f1":  # future work, change metrics
-            self.metrics = F1(args.num_classes)
+            self.metrics = F1(args.num_classes,downstream=args.downstream)
         else:
             assert "--metrics only support f1"
 
@@ -92,20 +91,30 @@ class Trainer(object):
         for data in self.train_dataloader:
             self.optimizer.zero_grad()
             inputs, target, attention_mask = self._gen_inputs(data)
-            # print(inputs[0])
-            # print(target[0])
-            output = self.model(inputs, attention_mask=attention_mask)
-            loss = self.criterion(output.view(-1, self.args.num_classes), target.view(-1))
+            # print("targets",target[:16,:7])
+            if self.model_name.endswith('crf'):
+                loss, logits = self.model(inputs, attention_mask=attention_mask, labels=target)
+                loss = loss/self.args.batch_size
+                output = self.model.downstream.viterbi_tags(logits=logits, mask=attention_mask)
+                # padding outputs
+                output = [x + [self.tokenizer.target_pad_token_id]* (self.args.max_seq_len - len(x))
+                           for x in output]
+                output = torch.tensor(output,dtype=torch.long,device=self.args.device)
+            else:
+                output = self.model(inputs, attention_mask=attention_mask)
+                loss = self.criterion(output.view(-1, self.args.num_classes), target.view(-1))
             loss.backward()
-            self.optimizer.step()
             dTP, dFP, dFN = self.metrics(output, target, attention_mask)
             TP += dTP
             FP += dFP
             FN += dFN
+
+            self.optimizer.step()
             self.train_loss += loss
             self.step += 1
 
             if self.step % self.args.step == 0:
+                print("start eval")
                 self.train_metric = self.metrics.get_f1(TP, FP, FN)
                 self._checkout(epoch)
                 self.time = time.time()
@@ -122,8 +131,18 @@ class Trainer(object):
             for data in self.dev_dataloader:
                 count += 1
                 inputs, target, attention_mask = self._gen_inputs(data)
-                output = self.model(inputs, attention_mask=attention_mask)
-                loss = self.criterion(output.view(-1, self.args.num_classes), target.view(-1))
+                if self.model_name.endswith('crf'):
+                    loss, logits = self.model(inputs, attention_mask=attention_mask, labels=target)
+                    loss = loss / self.args.batch_size
+                    output = self.model.downstream.viterbi_tags(logits=logits, mask=attention_mask)
+                    # padding outputs
+                    output = [x + [self.tokenizer.target_pad_token_id] * (self.args.max_seq_len - len(x))
+                              for x in output]
+                    output = torch.tensor(output, dtype=torch.long, device=self.args.device)
+                else:
+                    output = self.model(inputs, attention_mask=attention_mask)
+                    loss = self.criterion(output.view(-1, self.args.num_classes), target.view(-1))
+
                 dTP, dFP, dFN = self.metrics(output, target, attention_mask)
                 TP += dTP
                 FP += dFP
@@ -189,12 +208,12 @@ def main(args):
     args.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     tokenizer = None
     model = None
-    if args.model_name == "bert":
+    if args.model_name.startswith("bert"):
         print(f"> Loading bert model {args.pretrained_bert_name}")
         tokenizer = Tokenizer(args.max_seq_len, args.pretrained_bert_name)
         bert = BertModel.from_pretrained(args.pretrained_bert_name)
         model = BERT(bert, args)
-    elif args.model_name == "elmo":
+    elif args.model_name.startswith("elmo"):
         # TODO add elmo model
         pass
     else:
