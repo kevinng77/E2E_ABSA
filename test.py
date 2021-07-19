@@ -3,7 +3,7 @@ import torch
 from torch.utils.data import DataLoader
 from transformers import BertModel
 from config import config
-from models.BERT_BASE import PretrainModel
+from models.pretrain_model import PretrainModel
 from datetime import datetime
 sys.path.append("utils")
 from utils import result_helper
@@ -92,11 +92,16 @@ def demo():
             if a == 'exit':
                 break
             token_list = tokenizer.text_to_ids(process_string(a))
-            attention_mask = torch.tensor(
-                [1 if x != 0 else 0 for x in token_list]).view(1, -1).to(args.device)
-            inputs = torch.tensor(token_list).view(1, -1).to(args.device)
-            # print(tokenizer.ids_to_tokens(token_list))
-
+            len_seq = len(process_string(a).split())
+            if args.model_name == "bert":
+                attention_mask = torch.tensor(
+                    [1 if x != 0 else 0 for x in token_list]).view(1, -1).to(args.device)
+                inputs = torch.tensor(token_list).view(1, -1).to(args.device)
+            else:
+                inputs = token_list.unsqueeze(0).long().to(args.device)
+                attention_mask = torch.tensor(
+                    [1]*len_seq + [0] * (args.max_seq_len - len_seq),device=args.device
+                ).view(1,-1)
             if args.downstream != "crf":
                 outputs = model(inputs, attention_mask=attention_mask)
                 outputs = torch.masked_select(torch.argmax(outputs, dim=-1),
