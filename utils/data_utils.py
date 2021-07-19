@@ -3,18 +3,35 @@ from torch.utils.data import Dataset
 from transformers import BertTokenizer
 import numpy as np
 import os
+from transformers.file_utils import ModelOutput
+from allennlp.modules.elmo import batch_to_ids
 
 
 class Tokenizer:
-    def __init__(self, max_seq_len, pretrained_bert_name, pos_token=None, senti_token=None):
-        self.bert_tokenizer = BertTokenizer.from_pretrained(pretrained_bert_name)
-        self.max_seq_len = max_seq_len
+    def __init__(self, 
+                 args,
+                 pos_token=None, 
+                 senti_token=None,
+                 ):
+        self.model_name = args.model_name
+        assert self.model_name in ["bert","elmo"],\
+            f"{self.model_name} not implemented"
+        if self.model_name == "bert":
+            self.bert_tokenizer = BertTokenizer.from_pretrained(args.pretrained_bert_name)
+            self.pad_token = self.bert_tokenizer.pad_token
+        elif self.model_name == "elmo":
+            self.max_char_len = 50
+            self.pad_token = "[PAD]"
+
+        self.max_seq_len = args.max_seq_len
+
+        # Vocab for target tokenizer
         if senti_token is None:
             senti_token = ["pos", "neg", "neu"]
         if pos_token is None:
             pos_token = ["B", "I", "E"]
         self.target_pad_token_id = 99
-        vocab = {"O": 0, self.bert_tokenizer.pad_token: self.target_pad_token_id}
+        vocab = {"O": 0, self.pad_token: self.target_pad_token_id}
         token = 1
         for senti in senti_token:
             for pos in pos_token:
@@ -23,34 +40,54 @@ class Tokenizer:
         self.vocab = vocab
         self.id2vocab = {vocab[x]:x for x in vocab.keys()}
 
-    def edit_len(self, text, is_target):
+    def edit_len(self, text_ids, is_target):
+        """
+        padding ids for data batch
+        is_target bool: is padding for target token ids?
+        """
         if is_target:
             padding = self.target_pad_token_id
-        else:
+            if len(text_ids) > self.max_seq_len:
+                return text_ids[:self.max_seq_len]
+            else:
+                return text_ids + [padding] * (self.max_seq_len - len(text_ids))
+        elif self.model_name == "elmo":
+            # text_ids [batch_size, len_seq, max_char_len] for elmo
+            return torch.cat([text_ids, torch.zeros([self.max_seq_len - text_ids.shape[0], self.max_char_len])])
+
+        elif self.model_name == "bert":
             padding = self.bert_tokenizer.pad_token_id
-        if len(text) > self.max_seq_len:
-            return text[:self.max_seq_len]
-        else:
-            return text + [padding] * (self.max_seq_len - len(text))
+            if len(text_ids) > self.max_seq_len:
+                return text_ids[:self.max_seq_len]
+            else:
+                return text_ids + [padding] * (self.max_seq_len - len(text_ids))
 
     def tokens_to_ids(self, text, is_target=False):
+        """
+        text: list[str] list of words in a sentence.
+        """
         if is_target:
             sequence = [self.vocab[x] for x in text]
-        else:
+        elif self.model_name == "bert":
             sequence = self.bert_tokenizer.convert_tokens_to_ids(text)
+        elif self.model_name == "elmo":
+            sequence = batch_to_ids([text])[0]
         if len(sequence) == 0:
             sequence = [0]
         return self.edit_len(sequence, is_target)
 
-    def text_to_ids(self, text,is_target=False):
-        sequence = self.bert_tokenizer.convert_tokens_to_ids(self.bert_tokenizer.tokenize(text))
+    def text_to_ids(self, text, is_target=False):
+        if self.model_name == "bert":
+            sequence = self.bert_tokenizer.convert_tokens_to_ids(self.bert_tokenizer.tokenize(text))
+        else:
+            sequence = batch_to_ids([text.split()])[0]
         if len(sequence) == 0:
             sequence = [0]
         return self.edit_len(sequence,is_target)
 
-    def text_to_tokens(self, text, train=True, aspect=None):
-        tokens = self.bert_tokenizer.tokenize(text)
-        return tokens
+    # def text_to_tokens(self, text, train=True, aspect=None):
+    #     tokens = self.bert_tokenizer.tokenize(text)
+    #     return tokens
 
     def ids_to_tokens(self, ids, is_target = False):
         if is_target:
@@ -71,7 +108,7 @@ class E2EABSA_dataset(Dataset):
             gold = lines[i + 1]
             text_ids = tokenizer.tokens_to_ids(text.split())
             pred_ids = tokenizer.tokens_to_ids(gold.split(), is_target=True)
-            att_mask = [1 if x != tokenizer.bert_tokenizer.pad_token_id else 0 for x in text_ids]
+            att_mask = [1 if x != tokenizer.target_pad_token_id else 0 for x in pred_ids]
             data = {
                 "text_ids": torch.tensor(text_ids,dtype=torch.long),
                 "att_mask": torch.tensor(att_mask,dtype=torch.long),

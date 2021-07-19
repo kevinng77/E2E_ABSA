@@ -1,21 +1,19 @@
-import argparse
+from torch import optim
 from transformers import BertModel
 import torch
-from torch.utils.data import Dataset
-from transformers import BertTokenizer, AdamW, get_linear_schedule_with_warmup
-import numpy as np
+from transformers import Adafactor, AdamW, get_linear_schedule_with_warmup
 import os
-from models.BERT_BASE import BERT
+from models.BERT_BASE import PretrainModel
 from utils.data_utils import E2EABSA_dataset, Tokenizer
 import torch.nn as nn
-import logging
-import sys
 from torch.utils.data import DataLoader
 from datetime import datetime
 from utils.metrics import F1, FocalLoss
 from utils.result_helper import init_logger
 from config import config
 import time
+from allennlp.modules.elmo import Elmo
+
 
 logger = init_logger(logging_folder=config.working_path + 'checkout',
                      logging_file=config.working_path + "checkout/training_log.txt")
@@ -37,12 +35,10 @@ class Trainer(object):
         self.train_loss = 0
         self.step = 0
         self.time = 0
-        self.min_metrics = 0.58  # min F1 metrics to save model
+        self.min_metrics = 0.40  # min F1 metrics to save model
 
         if args.loss == "CE":
-            self.weight = [1.0 for _ in range(self.args.num_classes)]
-            self.weight[0] = 7e-2  # Adam test good
-            self.weight[-4] = 1.1
+            self.weight = [0.1, 0.8, 1., 1., 1.2, 1.2, 1.2, 1., 1., 1.]
             criterion_weight = torch.tensor(self.weight).to(self.args.device)
             self.criterion = nn.CrossEntropyLoss(ignore_index=self.tokenizer.target_pad_token_id,
                                                  weight=criterion_weight)
@@ -56,8 +52,7 @@ class Trainer(object):
         else:
             assert f"loss function {args.loss} only implement 'CE' , 'focal"
         self.optimizer = self.args.optimizer(self.model.parameters(),
-                                             lr=self.args.lr,
-                                             weight_decay=self.args.weight_decay)
+                                             **self.args.optimizer_kwargs)
         self.scheduler = get_linear_schedule_with_warmup(self.optimizer,
                                                          num_warmup_steps=args.warmup_steps,
                                                          num_training_steps=args.max_steps)
@@ -90,6 +85,11 @@ class Trainer(object):
         for data in self.train_dataloader:
             self.optimizer.zero_grad()
             inputs, target, attention_mask = self._gen_inputs(data)
+            # print(inputs.shape)
+            # print(inputs[0])
+            # print(target[0])
+            # print(attention_mask[0])
+            # print(attention_mask.shape)
             if self.model_name.endswith('crf'):
                 loss, logits = self.model(inputs, attention_mask=attention_mask, labels=target)
                 loss = loss / self.args.batch_size
@@ -100,7 +100,8 @@ class Trainer(object):
             else:
                 output = self.model(inputs, attention_mask=attention_mask)
                 loss = self.criterion(output.view(-1, self.args.num_classes), target.view(-1))
-
+            # print(output[0])
+            # print(output.shape)
             loss.backward()
             dTP, dFP, dFN = self.metrics(output, target, attention_mask)
             TP += dTP
@@ -165,7 +166,7 @@ class Trainer(object):
 
         path = f'checkout/state_dict/{self.model_name}_{self.args.mode}_final.pth'
         torch.save(self.model.state_dict(), path)
-        logger.info(f'>> saved: {path}')
+        print(f'>> saved: {path}')
 
     def _checkout(self, epoch):
         train_loss = self.train_loss / self.args.step
@@ -200,24 +201,45 @@ def main(args):
         'rmsprop': torch.optim.RMSprop,  # default lr=0.01
         'sgd': torch.optim.SGD,
         'adamw': AdamW,
+        'Adafactor': Adafactor
     }
-
+    default_optim_kwargs = {'lr': args.lr, 'weight_decay': args.weight_decay}
+    optimizers_kwargs = {
+        'adadelta': {},
+        'adagrad': {},
+        'adam': {"betas": (args.adam_beta1, args.adam_beta2),
+                 "eps": args.adam_epsilon,
+                 "amsgrad": args.adam_amsgrad},
+        'adamax': {},
+        'asgd': {},
+        'rmsprop': {},
+        'sgd': {},
+        'adamw': {"betas": (args.adam_beta1, args.adam_beta2),
+                  "eps": args.adam_epsilon},
+        'Adafactor': {"scale_parameter": False, "relative_step": False}
+    }
     assert args.optimizer in list(optimizers.keys()), \
         f"Optimizer only support {list(optimizers.keys())}"
+    args.optimizer_kwargs = optimizers_kwargs[args.optimizer]
+    args.optimizer_kwargs.update(default_optim_kwargs)
     args.optimizer = optimizers[args.optimizer]
     args.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-    tokenizer = None
     model = None
+    tokenizer = Tokenizer(args=args)
     if args.model_name.startswith("bert"):
         print(f"> Loading bert model {args.pretrained_bert_name}")
-        tokenizer = Tokenizer(args.max_seq_len, args.pretrained_bert_name)
         bert = BertModel.from_pretrained(args.pretrained_bert_name)
-        model = BERT(bert, args)
+        model = PretrainModel(pretrain_model=bert, args=args)
     elif args.model_name.startswith("elmo"):
-        # TODO add elmo model
-        pass
+        print(f"> Loading elmo model")
+        elmo = Elmo(options_file=config.options_file,
+                    weight_file=config.weight_file,
+                    num_output_representations=1,
+                    dropout=0,
+                    requires_grad=True)
+        model = PretrainModel(pretrain_model=elmo, args=args)
     else:
-        assert f"model {args.model} not in bert, elmo "
+        assert f"model {args.model_name} not implement "
     trainer = Trainer(model=model, tokenizer=tokenizer, args=args)
     trainer.run()
 

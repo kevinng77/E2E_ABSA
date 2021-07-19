@@ -4,11 +4,11 @@ import random
 import re
 import sys
 import xml.dom.minidom
-from xml.dom.minidom import parse
-
+# from xml.dom.minidom import parse
 sys.path.append('..')
 from config import config
 from data_utils import Tokenizer
+
 
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
@@ -131,11 +131,10 @@ def gen_data(xml_file, output_train, output_dev, output_test,
     logger.info(f"> # train {num_train} # dev {num_dev} # test {num_test}")
 
 
-def main(max_seq_len, pretrained_bert_name, args):
+def main(args):
     train_tokenizer = None
     if args.model_name == "bert":
-        if max_seq_len and pretrained_bert_name:
-            train_tokenizer = Tokenizer(max_seq_len, pretrained_bert_name)
+        train_tokenizer = Tokenizer(args=args)
     for file_type in ['res14', 'res16', 'lap14']:
         gen_data(xml_file=config.raw_data_path[file_type],
                  output_train=config.processed_data_path[file_type]['train'],
@@ -151,4 +150,4 @@ if __name__ == "__main__":
     assert len(args.split_ratio) == 3, \
         "split ratio for train, dev, test are all require."
     random.seed(args.seed)
-    main(args.max_seq_len, args.pretrained_bert_name, args)
+    main(args=args)

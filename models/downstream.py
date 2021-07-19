@@ -1,7 +1,6 @@
-import torch.nn as nn
-import torch
-import numpy as np
 import math
+import torch
+import torch.nn as nn
 
 
 class SelfAttention(nn.Module):
@@ -28,7 +27,7 @@ class LSTM(nn.Module):
         hidden_dim: 768, output hidden dimension. 768/2 for each direction.
         """
         super(LSTM, self).__init__()
-        self.hidden_dim = int(hidden_dim/2)
+        self.hidden_dim = int(hidden_dim / 2)
         self.num_layers = num_layers
         self.lstm = nn.LSTM(input_size=d_model,
                             hidden_size=self.hidden_dim,
@@ -40,8 +39,8 @@ class LSTM(nn.Module):
         self.device = args.device
 
     def forward(self, x):
-        h0 = torch.zeros(self.num_layers*2, x.size(0), self.hidden_dim).to(self.device)
-        c0 = torch.zeros(self.num_layers*2, x.size(0), self.hidden_dim).to(self.device)
+        h0 = torch.zeros(self.num_layers * 2, x.size(0), self.hidden_dim).to(self.device)
+        c0 = torch.zeros(self.num_layers * 2, x.size(0), self.hidden_dim).to(self.device)
         out, _ = self.lstm(x, (h0, c0))
         return out
 
@@ -135,7 +134,7 @@ class CRF(nn.Module):
         :return:
         """
         bsz, seq_len, _ = logits.size()
-        tags = tags*mask
+        tags = tags * mask
         # Transpose batch size and sequence dimensions:
         logits = logits.transpose(0, 1).contiguous()
         mask = mask.float().transpose(0, 1).contiguous()
@@ -254,6 +253,8 @@ def logsumexp(tensor, dim=-1, keepdim=False):
 def viterbi_decode(tag_sequence, transition_matrix,
                    tag_observations=None, allowed_start_transitions=None,
                    allowed_end_transitions=None):
+    # borrow code from
+    # https://github.com/lixin4ever/BERT-E2E-ABSA/blob/master/seq_utils.py
     """
     Perform Viterbi decoding in log space over a sequence given a transition matrix
     specifying pairwise (transition) potentials between tags and a matrix of shape
@@ -325,11 +326,10 @@ def viterbi_decode(tag_sequence, transition_matrix,
     if tag_observations:
         if len(tag_observations) != sequence_length:
             raise Exception("Observations were provided, but they were not the same length "
-                                     "as the sequence. Found sequence of length: {} and evidence: {}"
-                                     .format(sequence_length, tag_observations))
+                            "as the sequence. Found sequence of length: {} and evidence: {}"
+                            .format(sequence_length, tag_observations))
     else:
         tag_observations = [-1 for _ in range(sequence_length)]
-
 
     if has_start_end_restrictions:
         tag_observations = [num_tags - 2] + tag_observations + [num_tags - 1]
@@ -383,6 +383,4 @@ def viterbi_decode(tag_sequence, transition_matrix,
 
     if has_start_end_restrictions:
         viterbi_path = viterbi_path[1:-1]
-    #return viterbi_path, viterbi_score
-    # return np.array(viterbi_path, dtype=np.int32)
     return viterbi_path

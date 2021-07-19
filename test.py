@@ -1,28 +1,34 @@
-import argparse
-from transformers import BertModel
-import torch
-from torch.utils.data import Dataset
-from transformers import BertTokenizer
-import numpy as np
-from models.BERT_BASE import BERT
-from utils.data_utils import E2EABSA_dataset, Tokenizer
-import torch.nn as nn
 import sys
+import torch
+from torch.utils.data import DataLoader
+from transformers import BertModel
 from config import config
+from models.BERT_BASE import PretrainModel
+from datetime import datetime
+sys.path.append("utils")
+from utils import result_helper
+from utils.data_utils import E2EABSA_dataset, Tokenizer
 from utils.metrics import F1
 from utils.result_helper import init_logger
-from torch.utils.data import DataLoader
-import logging
-import os
-from utils import result_helper
+from utils.processer import process_string
+from allennlp.modules.elmo import Elmo
 
 
 def load_model():
     args = config.args
     args.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-    tokenizer = Tokenizer(args.max_seq_len, args.pretrained_bert_name)
-    bert = BertModel.from_pretrained(args.pretrained_bert_name)
-    model = BERT(bert, args).to(args.device)
+    tokenizer = Tokenizer(args=args)
+    if args.model_name.startswith("bert"):
+        bert = BertModel.from_pretrained(args.pretrained_bert_name)
+        model = PretrainModel(pretrain_model=bert, args=args).to(args.device)
+    else:
+        elmo = Elmo(options_file=config.options_file,
+                    weight_file=config.weight_file,
+                    num_output_representations=1,
+                    dropout=0,
+                    requires_grad=True)
+        model = PretrainModel(pretrain_model=elmo, args=args).to(args.device)
+
     model.load_state_dict(torch.load(args.state_dict_path))
     return model, tokenizer, args
 
@@ -70,8 +76,9 @@ def test():
                 f'aspect {f1_aspect * 100:.2f}%\t'
                 f'polarity {f1_polarity * 100:.2f}%\t'
                 f'total {f1_total * 100:.2f}%\t'
-                f'number of broken prediction {broken}\t'
-                f'seed {args.seed}')
+                f'#broken {broken}\t'
+                f'seed {args.seed}\t'
+                f'{datetime.now()}')
 
 
 def demo():
@@ -84,11 +91,11 @@ def demo():
             a = sys.stdin.readline().strip()
             if a == 'exit':
                 break
-            token_list = tokenizer.text_to_ids(a)
+            token_list = tokenizer.text_to_ids(process_string(a))
             attention_mask = torch.tensor(
                 [1 if x != 0 else 0 for x in token_list]).view(1, -1).to(args.device)
             inputs = torch.tensor(token_list).view(1, -1).to(args.device)
-            print(tokenizer.ids_to_tokens(token_list))
+            # print(tokenizer.ids_to_tokens(token_list))
 
             if args.downstream != "crf":
                 outputs = model(inputs, attention_mask=attention_mask)
