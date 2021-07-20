@@ -85,9 +85,9 @@ class Tokenizer:
             sequence = [0]
         return self.edit_len(sequence,is_target)
 
-    # def text_to_tokens(self, text, train=True, aspect=None):
-    #     tokens = self.bert_tokenizer.tokenize(text)
-    #     return tokens
+    def text_to_tokens(self, text, train=True, aspect=None):
+        tokens = self.bert_tokenizer.tokenize(text)
+        return tokens
 
     def ids_to_tokens(self, ids, is_target = False):
         if is_target:
