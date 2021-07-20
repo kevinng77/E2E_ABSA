@@ -5,7 +5,6 @@ pandas==1.2.4
 sentencepiece==0.1.91
 tokenizers==0.10.3
 torch==1.7.1
-torchelastic==0.2.1
 torchtext==0.8.0
 torchvision==0.8.2
 tornado==6.1

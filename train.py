@@ -223,7 +223,7 @@ def main(args):
     args.optimizer_kwargs = optimizers_kwargs[args.optimizer]
     args.optimizer_kwargs.update(default_optim_kwargs)
     args.optimizer = optimizers[args.optimizer]
-    args.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    args.device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
     model = None
     tokenizer = Tokenizer(args=args)
     if args.model_name.startswith("bert"):
@@ -236,7 +236,7 @@ def main(args):
                     weight_file=config.weight_file,
                     num_output_representations=1,
                     dropout=0,
-                    requires_grad=True)
+                    requires_grad=args.finetune_elmo)
         model = PretrainModel(pretrain_model=elmo, args=args)
     else:
         assert f"model {args.model_name} not implement "
