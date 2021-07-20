@@ -3,7 +3,7 @@ from transformers import BertModel
 import torch
 from transformers import Adafactor, AdamW, get_linear_schedule_with_warmup
 import os
-from models.BERT_BASE import PretrainModel
+from models.pretrain_model import PretrainModel
 from utils.data_utils import E2EABSA_dataset, Tokenizer
 import torch.nn as nn
 from torch.utils.data import DataLoader

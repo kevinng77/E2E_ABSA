@@ -38,7 +38,7 @@ parser.add_argument("--state_dict_path", type=str, default="bert_res14_F1_59.03.
 parser.add_argument("--seed", type=int, default=7)
 parser.add_argument("--metrics",type=str,default="f1")
 parser.add_argument("--verbose", action='store_true', default=False)
-parser.add_argument("--warmup_steps",type=int,default=500)
+parser.add_argument("--warmup_steps",type=int,default=300)
 parser.add_argument("--max_steps",type=int,default=3500)
 
 # optimizer param

@@ -10,3 +10,6 @@ SemEval-Triplet-data/
 # data/*/others/*
 data/*
 checkout/*
+.vscode
+.checkout
+.history
