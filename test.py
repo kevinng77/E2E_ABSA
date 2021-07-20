@@ -33,7 +33,7 @@ def load_model():
     return model, tokenizer, args
 
 
-def test():
+def test(logger):
     model, tokenizer, args = load_model()
     model.eval()
     metrics = F1(num_classes=args.num_classes, downstream=args.downstream)
@@ -120,4 +120,4 @@ if __name__ == "__main__":
     else:
         logger = init_logger(logging_folder=config.working_path + 'checkout',
                              logging_file=config.working_path + "checkout/test_log.txt")
-        test()
+        test(logger)

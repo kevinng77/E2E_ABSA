@@ -8,16 +8,7 @@ import xml.dom.minidom
 sys.path.append('..')
 from config import config
 from data_utils import Tokenizer
-
-
-logger = logging.getLogger()
-logger.setLevel(logging.INFO)
-if not os.path.exists(config.working_path + 'checkout'):
-    os.mkdir(config.working_path + 'checkout')
-handler = logging.FileHandler(config.working_path + "checkout/data_processing_log.txt")
-handler.setLevel(logging.INFO)
-logger.addHandler(logging.StreamHandler(sys.stdout))
-logger.addHandler(handler)
+from utils.result_helper import init_logger
 
 
 def match_string(origin, sub):
@@ -146,6 +137,8 @@ def main(args):
 
 
 if __name__ == "__main__":
+    logger = init_logger(logging_folder=config.working_path + 'checkout',
+                         logging_file=config.working_path + "checkout/data_processing_log.txt")
     args = config.args
     assert len(args.split_ratio) == 3, \
         "split ratio for train, dev, test are all require."
