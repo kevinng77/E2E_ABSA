@@ -1,1 +1,0 @@
->>> processing ./data/Semeval2014/raw/Restaurants_Train_v2.xml .

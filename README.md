@@ -35,7 +35,6 @@
 ├── train.py
 ├── train.sh
 └── utils
-    ├── checkout
     ├── data_utils.py
     ├── metrics.py
     ├── processer.py
@@ -60,7 +59,7 @@
 
 ```python
 cd utils
-python processer.py --model_name "bert"  --working_path "../" --seed 6 --max_seq_len 128# process bert training file
+python processer.py --model_name "bert"  --working_path "../" --seed 6 --max_seq_len 128
 ```
 
 `--model_name` : "bert" or "elmo"
