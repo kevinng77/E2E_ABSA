@@ -39,7 +39,7 @@ parser.add_argument("--seed", type=int, default=7)
 parser.add_argument("--metrics",type=str,default="f1")
 parser.add_argument("--verbose", action='store_true', default=False)
 parser.add_argument("--warmup_steps",type=int,default=500)
-parser.add_argument("--max_steps",type=int,default=3500)
+parser.add_argument("--max_steps",type=int,default=3000)
 
 # optimizer param
 parser.add_argument("--adam_beta1",type=float,default=0.9)

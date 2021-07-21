@@ -39,6 +39,7 @@ class Trainer(object):
 
         if args.loss == "CE":
             self.weight = [0.1, 0.8, 1., 1., 1.2, 1.2, 1.2, 1., 1., 1.]
+            # self.weight = [0.07, 1.0, 1.0, 1.0, 1.0, 1.0, 1.1, 1.0, 1.0, 1.0]
             criterion_weight = torch.tensor(self.weight).to(self.args.device)
             self.criterion = nn.CrossEntropyLoss(ignore_index=self.tokenizer.target_pad_token_id,
                                                  weight=criterion_weight)
@@ -85,11 +86,6 @@ class Trainer(object):
         for data in self.train_dataloader:
             self.optimizer.zero_grad()
             inputs, target, attention_mask = self._gen_inputs(data)
-            # print(inputs.shape)
-            # print(inputs[0])
-            # print(target[0])
-            # print(attention_mask[0])
-            # print(attention_mask.shape)
             if self.model_name.endswith('crf'):
                 loss, logits = self.model(inputs, attention_mask=attention_mask, labels=target)
                 loss = loss / self.args.batch_size
@@ -100,8 +96,6 @@ class Trainer(object):
             else:
                 output = self.model(inputs, attention_mask=attention_mask)
                 loss = self.criterion(output.view(-1, self.args.num_classes), target.view(-1))
-            # print(output[0])
-            # print(output.shape)
             loss.backward()
             dTP, dFP, dFN = self.metrics(output, target, attention_mask)
             TP += dTP

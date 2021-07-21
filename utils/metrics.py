@@ -73,7 +73,6 @@ class Accuracy(object):
 
         with torch.no_grad():
             pred = torch.argmax(outputs, dim=-1)
-            # print(torch.sum(pred).item())
             acc = torch.sum((pred == target) & (attention_mask != 0)) / torch.sum(attention_mask)
         return acc.item()
 
@@ -94,10 +93,10 @@ def get_confusion_matrix(target, outputs, num_classes, is_logit=True):
 
 
 class F1(object):
-    def __init__(self, num_classes, downstream, type="macro"):
+    def __init__(self, num_classes, downstream, avg_type="macro"):
         self.name = "F1"
         self.num_classes = num_classes
-        self.type = type
+        self.type = avg_type
         self.ds_name = downstream
 
     def __call__(self, outputs, target, attention_mask):
@@ -110,7 +109,7 @@ class F1(object):
         mask = attention_mask == 1
         conf_mat = get_confusion_matrix(target[mask], outputs[mask],
                                         num_classes=self.num_classes,
-                                        is_logit=self.ds_name!='crf')  # confusion matrix
+                                        is_logit=self.ds_name != 'crf')  # confusion matrix
         TP = conf_mat.diagonal()
         FP = conf_mat.sum(1) - TP
         FN = conf_mat.sum(0) - TP
