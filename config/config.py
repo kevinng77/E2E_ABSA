@@ -16,7 +16,7 @@ parser.add_argument("--weight_decay", type=float, default=1e-4)
 parser.add_argument("--num_classes", type=int, default=10)
 parser.add_argument("--batch_size", type=int, default=32)
 parser.add_argument("--lr", type=float, default=5e-5)
-parser.add_argument("--epochs", type=int, default=50)
+parser.add_argument("--epochs", type=int, default=100)
 parser.add_argument("--step", type=int, default=100,
                     help="checkout for each _ number of training step")
 parser.add_argument("--model_name",type=str,default='bert',help="bert, elmo")
