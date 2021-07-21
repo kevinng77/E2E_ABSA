@@ -1,6 +1,6 @@
 import argparse
-
-
+import pathlib
+working_path = pathlib.Path(__file__).absolute().parent.parent
 parser = argparse.ArgumentParser()
 
 # Preprocessing
@@ -57,7 +57,7 @@ parser.add_argument('--finetune_elmo',default=False,action='store_true')
 parser.add_argument("--demo",default=False,action='store_true')
 
 args = parser.parse_args()
-working_path = args.working_path
+
 
 if args.load_model:
     args.state_dict_path = "checkout/state_dict/" + args.state_dict_path
@@ -71,32 +71,32 @@ weight_file = "data/elmo/elmo_2x4096_512_2048cnn_2xhighway_weights.hdf5"
 
 # raw data to be process
 raw_data_path = {
-    "res14": working_path + "data/Semeval2014/raw/Restaurants_Train_v2.xml",
-    "res16": working_path + "data/Semeval2016/raw/ABSA16_Restaurants_Train_SB1_v2.xml",
-    "lap14": working_path + "data/Semeval2014/raw/Laptop_Train_v2.xml"
+    "res14": str(working_path.joinpath("data/Semeval2014/raw/Restaurants_Train_v2.xml")),
+    "res16": str(working_path.joinpath("data/Semeval2016/raw/ABSA16_Restaurants_Train_SB1_v2.xml")),
+    "lap14": str(working_path.joinpath("data/Semeval2014/raw/Laptop_Train_v2.xml"))
 }
 
 # path to save processed data
 processed_data_path = {
     "res14":{
-        "train": working_path + "data/Semeval2014/processed/Restaurants_Train_v2.csv",
-        "dev"  : working_path + "data/Semeval2014/processed/Restaurants_dev_v2.csv",
-        "test" : working_path + "data/Semeval2014/processed/Restaurants_test_v2.csv"
+        "train": str(working_path.joinpath("data/Semeval2014/processed/Restaurants_Train_v2.csv")),
+        "dev"  : str(working_path.joinpath("data/Semeval2014/processed/Restaurants_dev_v2.csv")),
+        "test" : str(working_path.joinpath("data/Semeval2014/processed/Restaurants_test_v2.csv"))
     },
     "res16":{
-        "train": working_path + "data/Semeval2016/processed/ABSA16_Restaurants_Train_SB1_v2.csv",
-        "dev"  : working_path + "data/Semeval2016/processed/ABSA16_Restaurants_dev_SB1_v2.csv",
-        "test" : working_path + "data/Semeval2016/processed/ABSA16_Restaurants_test_SB1_v2.csv"
+        "train": str(working_path.joinpath("data/Semeval2016/processed/ABSA16_Restaurants_Train_SB1_v2.csv")),
+        "dev"  : str(working_path.joinpath("data/Semeval2016/processed/ABSA16_Restaurants_dev_SB1_v2.csv")),
+        "test" : str(working_path.joinpath("data/Semeval2016/processed/ABSA16_Restaurants_test_SB1_v2.csv"))
     },
     "lap14":{
-        "train": working_path + "data/Semeval2014/processed/Laptop_Train_v2.csv",
-        "dev"  : working_path + "data/Semeval2014/processed/Laptop_dev_v2.csv",
-        "test" : working_path + "data/Semeval2014/processed/Laptop_test_v2.csv"
+        "train": str(working_path.joinpath("data/Semeval2014/processed/Laptop_Train_v2.csv")),
+        "dev"  : str(working_path.joinpath("data/Semeval2014/processed/Laptop_dev_v2.csv")),
+        "test" : str(working_path.joinpath("data/Semeval2014/processed/Laptop_test_v2.csv"))
     },
     'debug': {
-        'train': working_path + 'data/Semeval2014/processed/debug.csv',
-        'dev'  : working_path + 'data/Semeval2014/processed/debug.csv',
-        'test' : working_path + 'data/Semeval2014/processed/debug.csv'
+        'train': str(working_path.joinpath('data/Semeval2014/processed/debug.csv')),
+        'dev'  : str(working_path.joinpath('data/Semeval2014/processed/debug.csv')),
+        'test' : str(working_path.joinpath('data/Semeval2014/processed/debug.csv'))
     },
 }
 

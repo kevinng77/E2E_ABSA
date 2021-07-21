@@ -20,12 +20,12 @@ def compute_kl_loss(p, q, pad_mask=None):
 
 class FocalLoss(nn.Module):
     def __init__(self,
-                 class_num,
-                 alpha=None,
-                 gamma=2,
-                 ignore_index=99,
-                 size_average=True,
-                 device='cpu'):
+                 class_num: int,
+                 alpha: float = None,
+                 gamma: int = 2,
+                 ignore_index: int = 99,
+                 size_average: bool = True,
+                 device: str = 'cpu'):
         super().__init__()
         self.gamma = gamma
         if alpha is None:
@@ -93,7 +93,10 @@ def get_confusion_matrix(target, outputs, num_classes, is_logit=True):
 
 
 class F1(object):
-    def __init__(self, num_classes, downstream, avg_type="macro"):
+    def __init__(self,
+                 num_classes: int,
+                 downstream: str = "linear",
+                 avg_type: str = "macro"):
         self.name = "F1"
         self.num_classes = num_classes
         self.type = avg_type

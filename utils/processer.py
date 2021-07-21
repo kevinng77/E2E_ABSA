@@ -5,13 +5,22 @@ import re
 import sys
 import xml.dom.minidom
 # from xml.dom.minidom import parse
-sys.path.append('..')
+import pathlib
+abs_path = pathlib.Path(__file__).absolute().parent.parent
+sys.path.append(str(abs_path))
 from config import config
 from data_utils import Tokenizer
 from utils.result_helper import init_logger
 
 
 def match_string(origin, sub):
+    """
+    origin: list[str]. Raw string to match
+    sub: list[str]. Sub sequence in raw string
+    return:
+        - start index of sub sequence in origin string
+        - matched string
+    """
     for i in range(len(origin)):
         if origin[i] == sub[0]:
             for j in range(1, len(sub)):
@@ -22,6 +31,11 @@ def match_string(origin, sub):
 
 
 def process_string(s, remove_stop=False, args=config.args):
+    """
+    s: str. input string in english.
+    return:
+        - processed string
+    """
     s = re.sub(r'^"+', "", s.lower())  # remove beginning "
     s = re.sub(r'$"+', "", s)  # remove ending "
     # s = re.sub(r"<br />", r" ", s.lower())  # remove <br />
@@ -51,7 +65,9 @@ def process_string(s, remove_stop=False, args=config.args):
 def gen_data(xml_file, output_train, output_dev, output_test,
              train_tokenizer=None, args=config.args):
     """
-    output:
+    xml_file: str. raw xml file for SemEval dataset
+    output_train/dev/test: str. output path for train/dev/test set.
+    train_tokenizer: Required if generate bert data.
     """
     logger.info(f">>> processing {xml_file} .")
     DOMTree = xml.dom.minidom.parse(xml_file)
@@ -137,8 +153,8 @@ def main(args):
 
 
 if __name__ == "__main__":
-    logger = init_logger(logging_folder=config.working_path + 'checkout',
-                         logging_file=config.working_path + "checkout/data_processing_log.txt")
+    logger = init_logger(logging_folder=config.working_path.joinpath('checkout'),
+                         logging_file=config.working_path.joinpath("checkout/data_processing_log.txt"))
     args = config.args
     assert len(args.split_ratio) == 3, \
         "split ratio for train, dev, test are all require."

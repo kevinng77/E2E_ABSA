@@ -15,8 +15,8 @@ import time
 from allennlp.modules.elmo import Elmo
 
 
-logger = init_logger(logging_folder=config.working_path + 'checkout',
-                     logging_file=config.working_path + "checkout/training_log.txt")
+logger = init_logger(logging_folder=config.working_path.joinpath('checkout'),
+                     logging_file=config.working_path.joinpath("checkout/training_log.txt"))
 
 
 class Trainer(object):

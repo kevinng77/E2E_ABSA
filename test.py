@@ -5,7 +5,9 @@ from transformers import BertModel
 from config import config
 from models.pretrain_model import PretrainModel
 from datetime import datetime
-sys.path.append("utils")
+import pathlib
+abs_path = pathlib.Path(__file__).absolute().parent
+sys.path.append(str(abs_path.joinpath("utils")))
 from utils import result_helper
 from utils.data_utils import E2EABSA_dataset, Tokenizer
 from utils.metrics import F1
@@ -118,6 +120,6 @@ if __name__ == "__main__":
     if config.args.demo:
         demo()
     else:
-        logger = init_logger(logging_folder=config.working_path + 'checkout',
-                             logging_file=config.working_path + "checkout/test_log.txt")
+        logger = init_logger(logging_folder=config.working_path.joinpath('checkout'),
+                             logging_file=config.working_path.joinpath("checkout/test_log.txt"))
         test(logger)
