@@ -69,7 +69,7 @@ def gen_data(xml_file, output_train, output_dev, output_test,
     output_train/dev/test: str. output path for train/dev/test set.
     train_tokenizer: Required if generate bert data.
     """
-    logger.info(f">>> processing {xml_file} .")
+    logger.info(f">>> processing {xml_file}.")
     DOMTree = xml.dom.minidom.parse(xml_file)
     collection = DOMTree.documentElement
     sentences = collection.getElementsByTagName("sentence")
