@@ -1,15 +1,15 @@
 #!/bin/bash
-seed=6
+seed=77
 model_name="bert"
 cd utils||exit
-python processer.py --seed ${seed} --model_name ${model_name} --working_path "../"
+python processer.py --seed ${seed} --model_name ${model_name}
 cd ..
 for downstream in "linear" "lstm" "san" "crf"
 do
   for mode in "res14" "lap14" "res16"
   do
-    python train.py --mode ${mode} --model_name ${model_name} --downstream ${downstream} --seed ${seed} --gamma 2 --alpha 0.75 --optimizer "adamw"
-    python test.py --mode ${mode} --model_name ${model_name} --downstream ${downstream} --seed ${seed}
+    python train.py --clip_large_grad --mode ${mode} --model_name ${model_name} --downstream ${downstream} --seed ${seed} --gamma 2 --alpha 0.75 --optimizer "adamw"
+    python test.py clip_large_grad --mode ${mode} --model_name ${model_name} --downstream ${downstream} --seed ${seed}
   done
 done
 

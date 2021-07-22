@@ -50,7 +50,6 @@ parser.add_argument("--adam_epsilon",type=float,default=1e-8)
 parser.add_argument("--adam_amsgrad", default=False, action='store_true')
 
 # path
-parser.add_argument('--working_path', type=str, default="./")
 parser.add_argument('--mode',type=str,default="debug",help="default debug, res14, res16 or lap14")
 
 parser.add_argument('--finetune_elmo',default=False,action='store_true')
