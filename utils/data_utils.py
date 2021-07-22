@@ -53,7 +53,9 @@ class Tokenizer:
                 return text_ids + [padding] * (self.max_seq_len - len(text_ids))
         elif self.model_name == "elmo":
             # text_ids [batch_size, len_seq, max_char_len] for elmo
-            return torch.cat([text_ids, torch.zeros([self.max_seq_len - text_ids.shape[0], self.max_char_len])])
+            return torch.cat([text_ids,
+                                   torch.zeros([self.max_seq_len - text_ids.shape[0],
+                                                self.max_char_len])]).numpy().tolist()
 
         elif self.model_name == "bert":
             padding = self.bert_tokenizer.pad_token_id

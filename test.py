@@ -55,7 +55,7 @@ def test(logger):
             target = data["pred_ids"].to(args.device)
             attention_mask = data["att_mask"].to(args.device)
 
-            if args.downstream != "crf":
+            if not args.downstream.endswith("crf"):
                 output = model(inputs, attention_mask=attention_mask)
                 pred = torch.argmax(output, dim=-1).view(-1)
             else:
@@ -104,7 +104,7 @@ def demo():
                 attention_mask = torch.tensor(
                     [1]*len_seq + [0] * (args.max_seq_len - len_seq),device=args.device
                 ).view(1,-1)
-            if args.downstream != "crf":
+            if not args.downstream.endswith("crf"):
                 outputs = model(inputs, attention_mask=attention_mask)
                 outputs = torch.masked_select(torch.argmax(outputs, dim=-1),
                                               attention_mask == 1).cpu().numpy()
