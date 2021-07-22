@@ -9,3 +9,4 @@ torchtext==0.8.0
 torchvision==0.8.2
 tornado==6.1
 transformers==4.5.1
+tensorboardX==2.4

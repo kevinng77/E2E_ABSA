@@ -13,3 +13,4 @@ checkout/*
 .vscode
 .checkout
 .history
+runs/*

@@ -13,6 +13,8 @@ from utils.result_helper import init_logger
 from config import config
 import time
 from allennlp.modules.elmo import Elmo
+from torch.nn.utils import clip_grad_norm_
+from tensorboardX import SummaryWriter
 
 
 logger = init_logger(logging_folder=config.working_path.joinpath('checkout'),
@@ -102,6 +104,10 @@ class Trainer(object):
             FP += dFP
             FN += dFN
 
+            if self.args.clip_large_grad:
+                clip_grad_norm_(self.model.parameters(),
+                                max_norm=self.args.max_grad_norm,
+                                norm_type=2.0)
             self.optimizer.step()
             self.scheduler.step()
             self.train_loss += loss
@@ -144,6 +150,8 @@ class Trainer(object):
         return dev_losses / count, self.metrics.get_f1(TP, FP, FN, verbose=self.args.verbose)
 
     def run(self):
+        times = datetime.now()
+        self.writer = SummaryWriter(f'runs/{self.args.mode}_{self.args.seed}_{self.model_name}_{times}')
         if not os.path.exists('checkout/state_dict'):
             os.mkdir('checkout/state_dict')
 
@@ -161,6 +169,7 @@ class Trainer(object):
         path = f'checkout/state_dict/{self.model_name}_{self.args.mode}_final.pth'
         torch.save(self.model.state_dict(), path)
         print(f'>> saved: {path}')
+        self.writer.close()
 
     def _checkout(self, epoch):
         train_loss = self.train_loss / self.args.step
@@ -173,6 +182,10 @@ class Trainer(object):
                     f"{self.metrics.name}: {dev_metrics * 100:.2f}% "
                     f"{(time.time() - self.time) / 60:.2f} min")
 
+        self.writer.add_scalar(tag="Train_loss",scalar_value=train_loss,global_step=self.step)
+        self.writer.add_scalar(tag="Train_F1", scalar_value=self.train_metric * 100,global_step=self.step)
+        self.writer.add_scalar("Dev_loss",dev_loss,self.step)
+        self.writer.add_scalar("Dev_F1",dev_metrics * 100,self.step)
         if dev_metrics > self.max_val_acc:
             self.max_val_acc = dev_metrics
             if dev_metrics > self.min_metrics:

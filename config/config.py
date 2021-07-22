@@ -40,6 +40,8 @@ parser.add_argument("--metrics",type=str,default="f1")
 parser.add_argument("--verbose", action='store_true', default=False)
 parser.add_argument("--warmup_steps",type=int,default=500)
 parser.add_argument("--max_steps",type=int,default=3000)
+parser.add_argument("--max_grad_norm",type=float,default=2.0,help="limit max grad norm")
+parser.add_argument("--clip_large_grad",default=False,action='store_true')
 
 # optimizer param
 parser.add_argument("--adam_beta1",type=float,default=0.9)
