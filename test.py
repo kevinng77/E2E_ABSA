@@ -60,7 +60,7 @@ def test(logger):
                 pred = torch.argmax(output, dim=-1).view(-1)
             else:
                 _, logits = model(inputs, attention_mask=attention_mask, labels=target)
-                output = model.downstream.viterbi_tags(logits=logits, mask=attention_mask)
+                output = model.crf.viterbi_tags(logits=logits, mask=attention_mask)
                 # padding outputs
                 output = [x + [tokenizer.target_pad_token_id] * (args.max_seq_len - len(x))
                           for x in output]
@@ -110,7 +110,7 @@ def demo():
                                               attention_mask == 1).cpu().numpy()
             else:
                 _, logits = model(inputs, attention_mask=attention_mask, labels=attention_mask)
-                output = model.downstream.viterbi_tags(logits=logits, mask=attention_mask)
+                output = model.crf.viterbi_tags(logits=logits, mask=attention_mask)
                 outputs = torch.tensor(output, dtype=torch.long, device=args.device).view(-1).cpu().numpy()
             pred = tokenizer.ids_to_tokens(outputs, is_target=True)
             print(pred)

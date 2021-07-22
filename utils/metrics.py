@@ -21,7 +21,7 @@ def compute_kl_loss(p, q, pad_mask=None):
 class FocalLoss(nn.Module):
     def __init__(self,
                  class_num: int,
-                 alpha: float = None,
+                 alpha: list = None,
                  gamma: int = 2,
                  ignore_index: int = 99,
                  size_average: bool = True,
@@ -112,7 +112,7 @@ class F1(object):
         mask = attention_mask == 1
         conf_mat = get_confusion_matrix(target[mask], outputs[mask],
                                         num_classes=self.num_classes,
-                                        is_logit=self.ds_name != 'crf')  # confusion matrix
+                                        is_logit=not self.ds_name.endswith('crf'))  # confusion matrix
         TP = conf_mat.diagonal()
         FP = conf_mat.sum(1) - TP
         FN = conf_mat.sum(0) - TP

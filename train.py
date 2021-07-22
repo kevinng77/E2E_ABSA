@@ -91,7 +91,7 @@ class Trainer(object):
             if self.model_name.endswith('crf'):
                 loss, logits = self.model(inputs, attention_mask=attention_mask, labels=target)
                 loss = loss / self.args.batch_size
-                output = self.model.downstream.viterbi_tags(logits=logits, mask=attention_mask)
+                output = self.model.crf.viterbi_tags(logits=logits, mask=attention_mask)
                 output = [x + [self.tokenizer.target_pad_token_id] * (self.args.max_seq_len - len(x))
                           for x in output]
                 output = torch.tensor(output, dtype=torch.long, device=self.args.device)
@@ -133,7 +133,7 @@ class Trainer(object):
                 if self.model_name.endswith('crf'):
                     loss, logits = self.model(inputs, attention_mask=attention_mask, labels=target)
                     loss = loss / self.args.batch_size
-                    output = self.model.downstream.viterbi_tags(logits=logits, mask=attention_mask)
+                    output = self.model.crf.viterbi_tags(logits=logits, mask=attention_mask)
                     # padding outputs
                     output = [x + [self.tokenizer.target_pad_token_id] * (self.args.max_seq_len - len(x))
                               for x in output]
@@ -166,9 +166,9 @@ class Trainer(object):
             if self.step > self.args.max_steps:
                 break
 
-        path = f'checkout/state_dict/{self.model_name}_{self.args.mode}_final.pth'
-        torch.save(self.model.state_dict(), path)
-        print(f'>> saved: {path}')
+        # path = f'checkout/state_dict/{self.model_name}_{self.args.mode}_final.pth'
+        # torch.save(self.model.state_dict(), path)
+        # print(f'>> saved: {path}')
         self.writer.close()
 
     def _checkout(self, epoch):
