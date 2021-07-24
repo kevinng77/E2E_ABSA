@@ -23,14 +23,15 @@ def load_model():
     if args.model_name.startswith("bert"):
         bert = BertModel.from_pretrained(args.pretrained_bert_name)
         model = PretrainModel(pretrain_model=bert, args=args).to(args.device)
-    else:
+    elif args.model_name.startswith("elmo"):
         elmo = Elmo(options_file=config.options_file,
                     weight_file=config.weight_file,
                     num_output_representations=1,
                     dropout=0,
                     requires_grad=True)
         model = PretrainModel(pretrain_model=elmo, args=args).to(args.device)
-
+    else:
+        model = PretrainModel(pretrain_model=None, args=args).to(args.device)
     model.load_state_dict(torch.load(args.state_dict_path))
     return model, tokenizer, args
 
