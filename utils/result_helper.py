@@ -71,7 +71,9 @@ def gen_confusion_matrix(outputs, targets, ignore_index=99):
                 # 情感词不一致，或者抓取不完整
                 confusion[0, target_senti + 1] += 1
                 aspect[0, 1] += 1
-                if torch.all(targets[start:end]!=0):
+                if (outputs[start]%3==1) and (outputs[end]%3==0) and (outputs[end] != 0):
+                    # print(targets)
+                    # print(outputs)
                     broken += 1  # 词抓取到，但是情感不一致
     return aspect, confusion, broken
 

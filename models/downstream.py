@@ -1,5 +1,6 @@
 import math
 import torch
+from torch._C import dtype
 import torch.nn as nn
 
 
@@ -57,7 +58,20 @@ class CRF(nn.Module):
         self.num_tags = num_tags
         self.include_start_end_transitions = include_start_end_transitions
         self.transitions = nn.Parameter(torch.Tensor(self.num_tags, self.num_tags))
-        constraint_mask = torch.Tensor(self.num_tags + 2, self.num_tags + 2).fill_(1.)
+        # constraint_mask = torch.Tensor(self.num_tags + 2, self.num_tags + 2).fill_(1.)
+        constraint_mask = torch.Tensor([
+                 [1,1,0,0,1,0,0,1,0,0,0,1],
+                [1,1,1,1,1,0,0,1,0,0,0,1],
+                [0,0,1,1,0,0,0,0,0,0,0,0],
+                [1,1,0,0,1,0,0,1,0,0,0,1],
+                [1,1,0,0,1,1,1,1,0,0,0,1],
+                [0,0,0,0,0,1,1,0,0,0,0,0],
+                [1,1,0,0,1,0,0,1,0,0,0,1],
+                [1,1,0,0,1,0,0,1,1,1,0,1],
+                [0,0,0,0,0,0,0,0,1,1,0,0],
+                [1,1,0,0,1,0,0,1,0,0,0,1],
+                [1,1,0,0,1,0,0,1,0,0,0,0],
+                [0,0,0,0,0,0,0,0,0,0,0,0]]).float()
         if include_start_end_transitions:
             self.start_transitions = nn.Parameter(torch.Tensor(num_tags))
             self.end_transitions = nn.Parameter(torch.Tensor(num_tags))
