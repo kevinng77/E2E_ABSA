@@ -1,5 +1,7 @@
 import torch.nn as nn
 import sys
+import numpy as np
+import torch
 
 sys.path.append("..")
 from models.downstream import SelfAttention, LSTM, CRF
@@ -14,6 +16,17 @@ class PretrainModel(nn.Module):
         elif args.model_name == "elmo":
             self.elmo = pretrain_model
             self.d_model = 1024
+        elif args.model_name == "glove":
+            def create_emb_layer(non_trainable=False):
+                path = 'data/glove/glove_weight_matrix.npy'
+                weights_matrix = torch.tensor(np.load(path,allow_pickle=True))
+                num_embeddings, embedding_dim = weights_matrix.size()
+                emb_layer = nn.Embedding(num_embeddings, embedding_dim,padding_idx=5101)
+                emb_layer.load_state_dict({'weight': weights_matrix})
+                if non_trainable:
+                    emb_layer.weight.requires_grad = False
+                return emb_layer,  embedding_dim
+            self.glove,self.d_model = create_emb_layer()
         self.pretrain_type = args.model_name
         self.dropout = nn.Dropout(args.dropout)
         self.ds_name = args.downstream
@@ -57,9 +70,13 @@ class PretrainModel(nn.Module):
                                 token_type_ids=token_type_ids)  # segment id
             outputs = self.dropout(outputs.last_hidden_state)
 
-        else:
+        elif self.pretrain_type == 'elmo':
             outputs = self.elmo(inputs=input_ids)
             outputs = self.dropout(outputs['elmo_representations'][0])
+        
+        else:
+            outputs = self.glove(input_ids)
+            outputs = self.dropout(outputs)
 
         if self.ds_name == "san":
             outputs = self.san(outputs.transpose(0, 1),

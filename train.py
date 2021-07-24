@@ -245,6 +245,10 @@ def main(args):
                     dropout=0,
                     requires_grad=args.finetune_elmo)
         model = PretrainModel(pretrain_model=elmo, args=args)
+    elif args.model_name.startswith("glove"):
+        print(f"> Loading glove model")
+        model = PretrainModel(pretrain_model='glove', args=args)
+
     else:
         assert f"model {args.model_name} not implement "
     trainer = Trainer(model=model, tokenizer=tokenizer, args=args)

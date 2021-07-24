@@ -14,7 +14,7 @@ class Tokenizer:
                  senti_token=None,
                  ):
         self.model_name = args.model_name
-        assert self.model_name in ["bert","elmo"],\
+        assert self.model_name in ["bert","elmo","glove"],\
             f"{self.model_name} not implemented"
         if self.model_name == "bert":
             self.bert_tokenizer = BertTokenizer.from_pretrained(args.pretrained_bert_name)
@@ -22,6 +22,9 @@ class Tokenizer:
         elif self.model_name == "elmo":
             self.max_char_len = 50
             self.pad_token = "[PAD]"
+        elif self.model_name == "glove":
+            self.idx_path = 'data/glove/glove_idx.npy'
+            self.pad_token = 5101
 
         self.max_seq_len = args.max_seq_len
 
@@ -64,6 +67,13 @@ class Tokenizer:
             else:
                 return text_ids + [padding] * (self.max_seq_len - len(text_ids))
 
+        elif self.model_name == "glove":
+            padding = self.pad_token
+            if len(text_ids) > self.max_seq_len:
+                return text_ids[:self.max_seq_len]
+            else:
+                return text_ids + [padding] * (self.max_seq_len - len(text_ids))
+
     def tokens_to_ids(self, text, is_target=False):
         """
         text: list[str] list of words in a sentence.
@@ -74,6 +84,11 @@ class Tokenizer:
             sequence = self.bert_tokenizer.convert_tokens_to_ids(text)
         elif self.model_name == "elmo":
             sequence = batch_to_ids([text])[0]
+        else:
+            path = self.idx_path
+            word2idx = np.load(path,allow_pickle=True)
+            word2idx  = word2idx.tolist()
+            sequence = list(map(lambda w: word2idx.get(w, 0), text))
         if len(sequence) == 0:
             sequence = [0]
         return self.edit_len(sequence, is_target)
@@ -81,8 +96,13 @@ class Tokenizer:
     def text_to_ids(self, text, is_target=False):
         if self.model_name == "bert":
             sequence = self.bert_tokenizer.convert_tokens_to_ids(self.bert_tokenizer.tokenize(text))
-        else:
+        elif self.model_name == "elmo":
             sequence = batch_to_ids([text.split()])[0]
+        else:
+            path = self.idx_path
+            word2idx = np.load(path,allow_pickle=True)
+            word2idx  = word2idx.tolist()
+            sequence = list(map(lambda w: word2idx.get(w, 0), text.split()))
         if len(sequence) == 0:
             sequence = [0]
         return self.edit_len(sequence,is_target)
