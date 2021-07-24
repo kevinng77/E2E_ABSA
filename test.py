@@ -100,7 +100,7 @@ def demo():
                     [1 if x != 0 else 0 for x in token_list]).view(1, -1).to(args.device)
                 inputs = torch.tensor(token_list).view(1, -1).to(args.device)
             else:
-                inputs = torch.tensor(token_list).view(1, -1).long().to(args.device)
+                inputs = torch.tensor(token_list).unsqueeze(0).long().to(args.device)
                 attention_mask = torch.tensor(
                     [1]*len_seq + [0] * (args.max_seq_len - len_seq),device=args.device
                 ).view(1,-1)
