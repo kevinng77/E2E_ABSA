@@ -37,7 +37,7 @@ class Trainer(object):
         self.train_loss = 0
         self.step = 0
         self.time = 0
-        self.min_metrics = 0.40  # min F1 metrics to save model
+        self.min_metrics = 0.20  # min F1 metrics to save model
 
         if args.loss == "CE":
             self.weight = [0.1, 0.8, 1., 1., 1.2, 1.2, 1.2, 1., 1., 1.]
