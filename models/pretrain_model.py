@@ -18,7 +18,7 @@ class PretrainModel(nn.Module):
             self.d_model = 1024
         elif args.model_name == "glove":
             def create_emb_layer(non_trainable=False):
-                path = 'data/glove/glove_weight_matrix.npy'
+                path = args.glove_path
                 weights_matrix = torch.tensor(np.load(path,allow_pickle=True))
                 num_embeddings, embedding_dim = weights_matrix.size()
                 emb_layer = nn.Embedding(num_embeddings, embedding_dim,padding_idx=5101)

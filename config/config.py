@@ -68,6 +68,10 @@ else:
     args.state_dict_path = f'checkout/state_dict/{args.model_name}-{args.downstream}_' \
                        f'{args.mode}_seed{args.seed}.pth'
 
+if args.model_name == "glove":
+    args.glove_path = working_path / 'data/glove/glove_weight_matrix.npy'
+
+
 # path to elmo data
 options_file = "data/elmo/elmo_2x4096_512_2048cnn_2xhighway_options.json"
 weight_file = "data/elmo/elmo_2x4096_512_2048cnn_2xhighway_weights.hdf5"

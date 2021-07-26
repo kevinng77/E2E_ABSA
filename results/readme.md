@@ -21,7 +21,7 @@ schedular: [get_linear_schedule_with_warmup](https://huggingface.co/transformers
 
 **PC (Polarity Classify) F1**: Macro f1 for 3 classes during testing. (aspect-pos, aspect-neg, aspect-neu)
 
-**BP (Broken Prediction)**: Number of predictions with inconsistent polarity. i.e. B-neg, I-pos, E-pos
+**BP (Broken Prediction)**: Number of predictions with inconsistent polarity <u>for target aspect term</u>. i.e. B-neg, I-pos, E-pos
 
 *(aspect-pos means the word is aspect term and the polarity is positive)*
 
@@ -98,18 +98,19 @@ Warm up steps should not affect the final score significantly. Therefore it was 
 
 #### Model results
 
-|               | **lap 14** | **lap 14** | **lap 14** | lap 14 | res 16 | res 16 | res 16 | res 16 | res 14 | res 14 | res 14 | res 14 |
-| ------------- | ---------- | ---------- | ---------- | ------ | ------ | ------ | ------ | ------ | ------ | ------ | ------ | ------ |
-| models        | AE         | PC         | CE         | BP     | AE     | PC     | CE     | BP     | AE     | PC     | CE     | BP     |
-| GLOVE-tagging |            |            |            |        |        |        |        |        |        |        |        |        |
-| glove-        |            |            |            |        |        |        |        |        |        |        |        |        |
-| Glove-        |            |            |            |        |        |        |        |        |        |        |        |        |
-| bert-linear   | 87.60      | 70.14      | 64.80      | 40.2   | 85.30  | 67.11  | 62.34  | 38.0   | 89.49  | 72.04  | 68.13  | 60.25  |
-| bert-lstm     | 87.07      | 71.31      | 65.01      | 38.2   | 85.57  | 70.83  | 64.93  | 37.2   | 90.23  | 72.20  | 68.87  | 55.00  |
-| bert-san      | 87.08      | 69.57      | 63.94      | 42.4   | 85.09  | 67.15  | 61.88  | 40.0   | 90.01  | 74.46  | 70.12  | 54.75  |
-| bert-crf      | 87.80      | 69.97      | 65.07      | 36.6   | 85.73  | 69.12  | 64.20  | 34.4   | 89.97  | 72.82  | 68.72  | 50.75  |
-|               |            |            |            |        |        |        |        |        |        |        |        |        |
-| ELMO -        |            |            |            |        |        |        |        |        |        |        |        |        |
-| ELMO -        |            |            |            |        |        |        |        |        |        |        |        |        |
-| ELMO -        |            |            |            |        |        |        |        |        |        |        |        |        |
-| ELMO -        |            |            |            |        |        |        |        |        |        |        |        |        |
+|                              | **lap 14** | **lap 14** | **lap 14** | lap 14 | res 16 | res 16 | res 16 | res 16 | res 14 | res 14 | res 14 | res 14 |
+| ---------------------------- | ---------- | ---------- | ---------- | ------ | ------ | ------ | ------ | ------ | ------ | ------ | ------ | ------ |
+| models                       | AE         | PC         | CE         | BP     | AE     | PC     | CE     | BP     | AE     | PC     | CE     | BP     |
+| GLOVE-tagging                |            |            |            |        |        |        |        |        |        |        |        |        |
+| glove-                       |            |            |            |        |        |        |        |        |        |        |        |        |
+| Glove-                       |            |            |            |        |        |        |        |        |        |        |        |        |
+| bert-linear                  | 87.60      | 70.14      | 64.80      | 0      | 85.30  | 67.11  | 62.34  | 0      | 89.49  | 72.04  | 68.13  | 0      |
+| bert-lstm                    | 87.07      | 71.31      | 65.01      | 0      | 85.57  | 70.83  | 64.93  | 0      | 90.23  | 72.20  | 68.87  | 0      |
+| bert-san                     | 87.08      | 69.57      | 63.94      | 0      | 85.09  | 67.15  | 61.88  | 0      | 90.01  | 74.46  | 70.12  | 0      |
+| bert-crf                     | 87.80      | 69.97      | 65.07      | 0      | 85.73  | 69.12  | 64.20  | 0      | 89.97  | 72.82  | 68.72  | 0      |
+|                              |            |            |            |        |        |        |        |        |        |        |        |        |
+| ELMO -                       |            |            |            |        |        |        |        |        |        |        |        |        |
+| ELMO -                       |            |            |            |        |        |        |        |        |        |        |        |        |
+| ELMO -                       |            |            |            |        |        |        |        |        |        |        |        |        |
+| ELMO-lstm-crf (no fine-tune) | 85.73      | 67.11      | 61.59      | 0.0    | 86.74  | 57.81  | 56.85  | 0.0    | 89.63  | 68.82  | 66.49  | 0.5    |
+
