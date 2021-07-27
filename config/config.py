@@ -7,7 +7,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument("--augument",default=False,action='store_true')
 parser.add_argument("--contrastive",default=False,action='store_true')
 parser.add_argument("--rdrop",default=False,action='store_true')
-parser.add_argument("--rdrop_alpha",type=float,default=0.05)
+parser.add_argument("--rdrop_alpha",type=float,default=0.01)
 parser.add_argument("--temp",type=float,default=0.05)  # referred to simcse
 parser.add_argument("--contrastive_alpha",type=float,default=0.05)
 

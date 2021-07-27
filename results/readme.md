@@ -1,5 +1,5 @@
 
-# Results
+# **Results**
 
 default settings:
 
@@ -49,7 +49,7 @@ Weight:
 
 Cross Entropy weight is choosen based on 
 
-#### Focal Loss Tuning
+#### Focal Loss Tuning on bert
 
 Step-to-99: Step to reach 99% F1 score on train set.
 
@@ -80,8 +80,6 @@ Step-to-99: Step to reach 99% F1 score on train set.
 | 2     | 0.75  | 5e-5 | **61.11** | **69.56** | **89.55**      | **73.55**         | 6    | **adamw** |
 | 2     | 0.75  | 5e-5 | 59.05     | 67.81     | 88.31          | 73.71             | 6    | adam      |
 
-
-
 #### Warm up Tuning
 
 testing on bert linear model with adamw optimizer
@@ -98,19 +96,29 @@ Warm up steps should not affect the final score significantly. Therefore it was 
 
 #### Model results
 
-|                              | **lap 14** | **lap 14** | **lap 14** | lap 14 | res 16 | res 16 | res 16 | res 16 | res 14 | res 14 | res 14 | res 14 |
-| ---------------------------- | ---------- | ---------- | ---------- | ------ | ------ | ------ | ------ | ------ | ------ | ------ | ------ | ------ |
-| models                       | AE         | PC         | CE         | BP     | AE     | PC     | CE     | BP     | AE     | PC     | CE     | BP     |
-| GLOVE-tagging                |            |            |            |        |        |        |        |        |        |        |        |        |
-| glove-                       |            |            |            |        |        |        |        |        |        |        |        |        |
-| Glove-                       |            |            |            |        |        |        |        |        |        |        |        |        |
-| bert-linear                  | 87.60      | 70.14      | 64.80      | 0      | 85.30  | 67.11  | 62.34  | 0      | 89.49  | 72.04  | 68.13  | 0      |
-| bert-lstm                    | 87.07      | 71.31      | 65.01      | 0      | 85.57  | 70.83  | 64.93  | 0      | 90.23  | 72.20  | 68.87  | 0      |
-| bert-san                     | 87.08      | 69.57      | 63.94      | 0      | 85.09  | 67.15  | 61.88  | 0      | 90.01  | 74.46  | 70.12  | 0      |
-| bert-crf                     | 87.80      | 69.97      | 65.07      | 0      | 85.73  | 69.12  | 64.20  | 0      | 89.97  | 72.82  | 68.72  | 0      |
-|                              |            |            |            |        |        |        |        |        |        |        |        |        |
-| ELMO -                       |            |            |            |        |        |        |        |        |        |        |        |        |
-| ELMO -                       |            |            |            |        |        |        |        |        |        |        |        |        |
-| ELMO -                       |            |            |            |        |        |        |        |        |        |        |        |        |
-| ELMO-lstm-crf (no fine-tune) | 85.73      | 67.11      | 61.59      | 0.0    | 86.74  | 57.81  | 56.85  | 0.0    | 89.63  | 68.82  | 66.49  | 0.5    |
+|                 | **lap 14** | **lap 14** | **lap 14** | lap 14 | res 16 | res 16 | res 16 | res 16 | res 14 | res 14 | res 14 | res 14 |
+| --------------- | ---------- | ---------- | ---------- | ------ | ------ | ------ | ------ | ------ | ------ | ------ | ------ | ------ |
+| models          | AE         | PC         | CE         | BP     | AE     | PC     | CE     | BP     | AE     | PC     | CE     | BP     |
+| glove-lstm      | 82.48      | 59.53      | 54.89      | 0.0    | 83.32  | 60.21  | 55.40  | 0.0    | 86.78  | 62.71  | 60.03  | 0.0    |
+| glove- LSTM-CRF | 84.62      | 63.19      | 60.13      | 0.0    | 86.54  | 64.19  | 60.51  | 0.0    | 88.25  | 64.17  | 63.31  | 0.0    |
 
+glove-san, glove-linear performs terrible in parameter tuning section, therefore do not conduct the testing for them.
+
+|             | **lap 14** | **lap 14** | **lap 14** | lap 14 | res 16    | res 16    | res 16    | res 16 | res 14    | res 14    | res 14    | res 14 |
+| ----------- | ---------- | ---------- | ---------- | ------ | --------- | --------- | --------- | ------ | --------- | --------- | --------- | ------ |
+| models      | AE         | PC         | CE         | BP     | AE        | PC        | CE        | BP     | AE        | PC        | CE        | BP     |
+| bert-linear | 87.60      | 70.14      | 64.80      | 0      | 85.30     | 67.11     | 62.34     | 0      | 89.49     | 72.04     | 68.13     | 0      |
+| bert-lstm   | 87.07      | **71.31**  | 65.01      | 0      | 85.57     | **70.83** | **64.93** | 0      | **90.23** | 72.20     | 68.87     | 0      |
+| bert-san    | 87.08      | 69.57      | 63.94      | 0      | 85.09     | 67.15     | 61.88     | 0      | 90.01     | **74.46** | **70.12** | 0      |
+| bert-crf    | **87.80**  | 69.97      | **65.07**  | 0      | **85.73** | 69.12     | 64.20     | 0      | 89.97     | 72.82     | 68.72     | 0      |
+
+Refered to the Breaking Prediction Score, that is how many times the model extract a complete word with inconsistent polarity. It indicate the bert is good enough to generate a prediction without broken, such that the CRF brings less benifit to it rather than to ELMO and GLOVE.
+
+|                              | **lap 14** | **lap 14** | **lap 14** | lap 14 | res 16    | res 16    | res 16    | res 16 | res 14    | res 14    | res 14    | res 14 |
+| ---------------------------- | ---------- | ---------- | ---------- | ------ | --------- | --------- | --------- | ------ | --------- | --------- | --------- | ------ |
+| models                       | AE         | PC         | CE         | BP     | AE        | PC        | CE        | BP     | AE        | PC        | CE        | BP     |
+| elmo-lstm                    | 86.00      | **68.44**  | 62.32      | 0.0    | 86.22     | 63.42     | 59.60     | 0.0    | 89.26     | 67.49     | 65.17     | 0.0    |
+| elmo-san                     | 84.75      | 62.46      | 58.60      | 0.0    | 87.08     | **64.97** | **61.58** | 0.0    | 88.44     | **69.50** | 66.05     | 0.0    |
+| elmo-crf                     | 84.62      | 63.19      | 60.13      | 0.0    | 86.54     | 64.19     | 60.51     | 0.0    | 88.25     | 64.17     | 63.31     | 0.0    |
+| elmo-lstm-crf                | **87.56**  | 65.91      | **62.37**  | 0      | **87.11** | 61.91     | 60.17     | 0      | **89.76** | 67.05     | 65.06     | 0      |
+| ELMO-lstm-crf (no fine-tune) | 85.73      | 67.11      | 61.59      | 0.0    | 86.74     | 57.81     | 56.85     | 0.0    | 89.63     | 68.82     | **66.49** | 0      |
