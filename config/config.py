@@ -3,6 +3,15 @@ import pathlib
 working_path = pathlib.Path(__file__).absolute().parent.parent
 parser = argparse.ArgumentParser()
 
+
+parser.add_argument("--augument",default=False,action='store_true')
+parser.add_argument("--contrastive",default=False,action='store_true')
+parser.add_argument("--rdrop",default=False,action='store_true')
+parser.add_argument("--rdrop_alpha",type=float,default=0.05)
+parser.add_argument("--temp",type=float,default=0.05)  # referred to simcse
+parser.add_argument("--contrastive_alpha",type=float,default=0.05)
+
+
 # Preprocessing
 parser.add_argument('--max_seq_len', type=int, default=128, help="default 128")
 parser.add_argument('--pretrained_bert_name', type=str, default='bert-base-uncased',

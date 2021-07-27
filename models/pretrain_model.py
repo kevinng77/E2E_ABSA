@@ -32,6 +32,7 @@ class PretrainModel(nn.Module):
         self.ds_name = args.downstream
         self.classifier = nn.Linear(self.d_model, args.num_classes)
         self.model_name = f"{args.model_name}-{args.downstream}"
+        self.args = args
         assert args.downstream in ['linear', 'lstm', "san", "crf","lstm-crf"], \
             f"downstream model {args.downstream} not in linear, lstm, san or crf"
 
@@ -68,6 +69,12 @@ class PretrainModel(nn.Module):
             outputs = self.bert(input_ids=input_ids,
                                 attention_mask=attention_mask,  # 0 if padding
                                 token_type_ids=token_type_ids)  # segment id
+            if self.args.augument:
+                represents = outputs.last_hidden_state
+            #     hidden_states = outputs.hidden_states
+            #     first_hidden = hidden_states[0]
+            #     last_hidden = hidden_states[-1]
+            #     pooled_result = (first_hidden + last_hidden) / 2.0
             outputs = self.dropout(outputs.last_hidden_state)
 
         elif self.pretrain_type == 'elmo':
@@ -94,4 +101,7 @@ class PretrainModel(nn.Module):
                              mask=attention_mask)
             return loss, outputs
         else:
-            return outputs
+            if self.args.augument:
+                return outputs, represents
+            else:
+                return outputs
