@@ -8,7 +8,7 @@ from utils.data_utils import E2EABSA_dataset, Tokenizer
 import torch.nn as nn
 from torch.utils.data import DataLoader
 from datetime import datetime
-from utils.metrics import F1, FocalLoss
+from utils.metrics import F1, FocalLoss, compute_kl_loss, ContrastiveLoss
 from utils.result_helper import init_logger
 from config import config
 import time
@@ -76,6 +76,9 @@ class Trainer(object):
                                            shuffle=self.args.shuffle,
                                            drop_last=True)
 
+        if self.args.contrastive:
+            self.contrastive_loss = ContrastiveLoss(temp=args.temp)
+
     def _gen_inputs(self, data):
         inputs = data["text_ids"].to(self.args.device)
         target = data["pred_ids"].to(self.args.device)
@@ -96,8 +99,25 @@ class Trainer(object):
                           for x in output]
                 output = torch.tensor(output, dtype=torch.long, device=self.args.device)
             else:
-                output = self.model(inputs, attention_mask=attention_mask)
-                loss = self.criterion(output.view(-1, self.args.num_classes), target.view(-1))
+                if self.args.augument:
+                    addition_loss = 0
+                    output,q = self.model(inputs, attention_mask=attention_mask)
+                    output2,p = self.model(inputs, attention_mask=attention_mask)
+                    if self.args.rdrop:
+                        addition_loss = self.args.rdrop_alpha * compute_kl_loss(q,p,pad_mask=attention_mask) + addition_loss
+                        # rdrop loss * 0.05 = 1.+
+                    if self.args.contrastive:
+                        addition_loss = self.args.contrastive_alpha * self.contrastive_loss(p,q,attention_mask) + addition_loss
+                        # contrastive loss * 0.05 = 1.+
+                        # print(addition_loss)
+                    loss = self.criterion(output.view(-1, self.args.num_classes), target.view(-1))
+                    loss2 = self.criterion(output2.view(-1, self.args.num_classes), target.view(-1))
+                    # print(loss)
+                    loss = (loss2 + loss)/2 + addition_loss
+                else:
+                    output = self.model(inputs, attention_mask=attention_mask)
+                    loss = self.criterion(output.view(-1, self.args.num_classes), target.view(-1))
+
             loss.backward()
             dTP, dFP, dFN = self.metrics(output, target, attention_mask)
             TP += dTP
@@ -140,6 +160,8 @@ class Trainer(object):
                     output = torch.tensor(output, dtype=torch.long, device=self.args.device)
                 else:
                     output = self.model(inputs, attention_mask=attention_mask)
+                    if self.args.augument:
+                        output = output[0]
                     loss = self.criterion(output.view(-1, self.args.num_classes), target.view(-1))
 
                 dTP, dFP, dFN = self.metrics(output, target, attention_mask)
@@ -196,8 +218,6 @@ class Trainer(object):
 
 
 def main(args):
-    torch.manual_seed(args.seed)
-    torch.cuda.manual_seed(args.seed)
 
     optimizers = {
         'adadelta': torch.optim.Adadelta,  # default lr=1.0
@@ -227,6 +247,8 @@ def main(args):
     }
     assert args.optimizer in list(optimizers.keys()), \
         f"Optimizer only support {list(optimizers.keys())}"
+    if args.augument:
+        assert args.model_name == "bert" and not args.downstream.endswith('crf'), "augument not support crf and elmo"
     args.optimizer_kwargs = optimizers_kwargs[args.optimizer]
     args.optimizer_kwargs.update(default_optim_kwargs)
     args.optimizer = optimizers[args.optimizer]

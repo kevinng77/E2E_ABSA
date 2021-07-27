@@ -3,10 +3,59 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 
+class ContrastiveLoss(nn.Module):
+    """
+    Dot product or cosine similarity
+    """
+
+    def __init__(self, temp):
+        super().__init__()
+        self.temp = temp
+        # self.cos = nn.CosineSimilarity(dim=1)
+
+    def forward(self, q, p, pad_mask=None):
+        """
+        q,p : (batch_size, len_seq, d_model)
+        logits for same model with 2 differernt dropout
+        """
+        if pad_mask is not None:
+            q = q*pad_mask.unsqueeze(2)
+            p = p*pad_mask.unsqueeze(2)
+
+        sum_q = torch.sum(q, dim=1)  # batch_size, d_model
+        sum_p = torch.sum(p, dim=1)
+
+        q = sum_q/torch.sum(pad_mask,dim=1,keepdim=True)  # batch_size, d_model
+        p = sum_p/torch.sum(pad_mask,dim=1,keepdim=True)
+        # print("q shape (batch_size, d_model)",q.shape)
+        dot = torch.matmul(q, p.T)
+        norm_q = torch.norm(q, dim=1)
+        norm_p = torch.norm(q, dim=1)
+        m_norm = norm_q.view(-1, 1) * norm_p.view(1, -1)
+        similarity = dot / m_norm
+        similarity = similarity / self.temp
+        # print("simi",similarity.shape)
+        # similarity (batch_size, batch_size)
+        exp_simi = torch.exp(similarity)
+        # print(exp_simi.shape)
+        pos_simi = torch.diag(exp_simi,0)
+        # print(pos_simi.shape)
+        # print(pos_simi)
+        # pos_simi (batch_size, )
+        neg_sum = torch.sum(exp_simi,dim=1) - pos_simi
+        return torch.mean(pos_simi/neg_sum)
+
+
 def compute_kl_loss(p, q, pad_mask=None):
+    """
+    q,p : logits for same model with 2 differernt dropout
+    """
+
     if pad_mask is not None:
         q = q[pad_mask != 0]
         p = p[pad_mask != 0]
+
+    # q.shape (-1, d_model)
 
     # 官方的r-drop针对序列模型提供的方法为对两次序列中对应的单词计算kl损失
     # 类似于局部与局部的对比学习与数据增强
