@@ -3,7 +3,7 @@
 .
 ├── checkout
 │   ├── data_processing_log.txt
-│   ├── state_dict
+│   ├── state_dict  //saved model
 │   ├── test_log.txt
 │   └── training_log.txt
 ├── config
@@ -12,7 +12,8 @@
 │   ├── elmo  //elmo pretrained models
 │   │   ├── elmo_2x4096_512_2048cnn_2xhighway_options.json
 │   │   └── elmo_2x4096_512_2048cnn_2xhighway_weights.hdf5
-│   ├── Semeval2014
+│   ├── glove  //glove pretrained embeddings
+│   │   ├── Semeval2014
 │   │   ├── processed //processed files
 │   │   │   ├── Restaurants_dev_v2.csv
 │   │   │   ├── Restaurants_test_v2.csv
@@ -28,9 +29,12 @@
 │   ├── stopwords.txt
 ├── models
 │   ├── downstream.py  //Linear, LSTM, Self-Attention, CRF
-│   └── pretrain_model.py  //BERT, ELMO
+│   └── pretrain_model.py  
 ├── README.md
 ├── requirements.txt
+├── results    
+│   ├── total_train_log.csv  // 194 training records
+│   └── readme.md  // more results
 ├── test.py
 ├── train.py
 ├── train.sh
@@ -43,15 +47,20 @@
 
 ## Experiment
 
-### result
+|                              | **lap 14** | **lap 14** | **lap 14** | res 16 | res 16    | res 16    | res 14    | res 14    | res 14    |
+| ---------------------------- | ---------- | ---------- | ---------- | ------ | --------- | --------- | --------- | --------- | --------- |
+| models                       | AE         | PC         | CE         | AE     | PC        | CE        | AE        | PC        | CE        |
+| bert-linear                  | 87.60      | 70.14      | 64.80      | 85.30  | 67.11     | 62.34     | 89.49     | 72.04     | 68.13     |
+| bert-lstm                    | 87.07      | **71.31**  | 65.01      | 85.57  | **70.83** | **64.93** | **90.23** | 72.20     | 68.87     |
+| bert-san                     | 87.08      | 69.57      | 63.94      | 85.09  | 67.15     | 61.88     | 90.01     | **74.46** | **70.12** |
+| bert-crf                     | 87.80      | 69.97      | **65.07**  | 85.73  | 69.12     | 64.20     | 89.97     | 72.82     | 68.72     |
+| bert-linear r-drop           | 88.37      | 68.29      | 64.73      | 85.96  | 71.17     | 66.5      | 89.77     | 73.89     | 69.55     |
+| bert-linear contrastive loss |            |            |            |        |           |           |           |           |           |
+|                              |            |            |            |        |           |           |           |           |           |
 
-更新中
 
-|      |      |      |
-| ---- | ---- | ---- |
-|      |      |      |
-|      |      |      |
-|      |      |      |
+
+More esults please referred to [result folder](results/)
 
 ## To Run
 
@@ -59,12 +68,10 @@
 
 ```python
 cd utils
-python processer.py --model_name "bert"  --working_path "../" --seed 6 --max_seq_len 128
+python processer.py --model_name "bert" --seed 6 --max_seq_len 128
 ```
 
-`--model_name` : "bert" or "elmo"
-
-`--working_path`: fixed to `"../"` or the local path to this repo.
+`--model_name` : "bert", "elmo" or "glove"
 
  `--seed`: selected random seed.
 
@@ -78,9 +85,9 @@ python train.py --mode "res14" --downstream "san" --model_name "bert" --seed 6
 
 `--mode` : res14 , res16 or lap14. The SemEval task to train on.
 
-`--downstream` : linear, lstm, crf or san. The downstream model.
+`--downstream` : linear, lstm, crf, lstm-crf or san. The downstream model.
 
-`--model_name` : pretrained model name, keep consistent with step 1.
+`--model_name` :  "bert", "elmo" or "glove", same asstep 1.
 
 `--seed` : seed for record training log, same as step 1.
 
@@ -95,7 +102,7 @@ training log path: `./checkout/training_log.txt`
 #### Step 3: Generate test result
 
  ```shell
- python test.py --mode "res14" --downstream "san" --model_name "bert"
+ python test.py --mode "res14" --downstream "san" --model_name "bert" --seed 6
  ```
 
 testing log path: `./checkout/test_log.txt`
