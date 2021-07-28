@@ -23,6 +23,8 @@ schedular: [get_linear_schedule_with_warmup](https://huggingface.co/transformers
 
 **BP (Broken Prediction)**: Number of predictions with inconsistent polarity <u>for target aspect term</u>. i.e. B-neg, I-pos, E-pos
 
+**Seed** : seed for spliting the dataset
+
 *(aspect-pos means the word is aspect term and the polarity is positive)*
 
 #### Cross Entropy Loss tuning
@@ -96,6 +98,8 @@ Warm up steps should not affect the final score significantly. Therefore it was 
 
 #### Model results
 
+<u>The following model is trained and test on different dataset with split seed (6, 7, 8, 66, 77). Each model test on each dataset once. The final score is the mean of Macro F1 for 5 tests.</u>
+
 |                 | **lap 14** | **lap 14** | **lap 14** | lap 14 | res 16 | res 16 | res 16 | res 16 | res 14 | res 14 | res 14 | res 14 |
 | --------------- | ---------- | ---------- | ---------- | ------ | ------ | ------ | ------ | ------ | ------ | ------ | ------ | ------ |
 | models          | AE         | PC         | CE         | BP     | AE     | PC     | CE     | BP     | AE     | PC     | CE     | BP     |
@@ -122,3 +126,27 @@ Refered to the Breaking Prediction Score, that is how many times the model extra
 | elmo-crf                     | 84.62      | 63.19      | 60.13      | 0.0    | 86.54     | 64.19     | 60.51     | 0.0    | 88.25     | 64.17     | 63.31     | 0.0    |
 | elmo-lstm-crf                | **87.56**  | 65.91      | **62.37**  | 0      | **87.11** | 61.91     | 60.17     | 0      | **89.76** | 67.05     | 65.06     | 0      |
 | ELMO-lstm-crf (no fine-tune) | 85.73      | 67.11      | 61.59      | 0.0    | 86.74     | 57.81     | 56.85     | 0.0    | 89.63     | 68.82     | **66.49** | 0      |
+
+#### R-drop and contrastive loss test:
+
+<u>The following result is test on dataset with split seed 6. Each model was train and test on the dataset 5 times. The score is the mean of Macro F1 for 5 tests.</u> 
+
+baseline model: bert-base-uncased + linear + focal loss (alpha 0.75,  gamma 2)
+
+r-drop: r_drop alpha = 0.01 (The paper use 1 together with CE, considering focal loss is much less than CE)
+
+contrastive loss: temperature = 0.05, alpha = 0.1, selected small alpha same reason as above.
+
+|                  | **lap 14** | **lap 14** | **lap 14** | lap 14 | res 16 | res 16 | res 16 | res 16 | res 14 | res 14 | res 14 | res 14 |
+| ---------------- | ---------- | ---------- | ---------- | ------ | ------ | ------ | ------ | ------ | ------ | ------ | ------ | ------ |
+| loss type        | AE         | PC         | CE         | BP     | AE     | PC     | CE     | BP     | AE     | PC     | CE     | BP     |
+| focal los        | 87.72      | 72.52      | 66.47      | 0      | 84.83  | 69.86  | 63.07  | 0      | 89     | 72.15  | 68.07  | 0      |
+| rdrop            | 87.91      | 73.29      | 67.38      | 0      | 84.63  | 72.85  | 66.88  | 0      | 89.38  | 70.5   | 67.16  | 0      |
+| contrastive loss | 87.49      | 70.59      | 65.07      | 0      | 85.35  | 71.38  | 65.18  | 0      | 89.15  | 71.43  | 67.75  | 0      |
+
+**Reference:**
+
+[[1\] ](https://arxiv.org/search/cs?searchtype=author&query=Gao%2C+T)[Tianyu](https://arxiv.org/search/cs?searchtype=author&query=Gao%2C+T)[ Gao](https://arxiv.org/search/cs?searchtype=author&query=Gao%2C+T), [Xingcheng](https://arxiv.org/search/cs?searchtype=author&query=Yao%2C+X)[ Yao](https://arxiv.org/search/cs?searchtype=author&query=Yao%2C+X), [Danqi](https://arxiv.org/search/cs?searchtype=author&query=Chen%2C+D)[ Chen](https://arxiv.org/search/cs?searchtype=author&query=Chen%2C+D) 2021. SimCSE: Simple Contrastive Learning of Sentence Embeddings. [arXiv:2104.08821](https://arxiv.org/abs/2104.08821) **[cs.CL]**
+
+[2] [Xiaobo Liang](https://arxiv.org/search/cs?searchtype=author&query=Liang%2C+X), [Lijun Wu](https://arxiv.org/search/cs?searchtype=author&query=Wu%2C+L), [Juntao](https://arxiv.org/search/cs?searchtype=author&query=Li%2C+J)[ Li](https://arxiv.org/search/cs?searchtype=author&query=Li%2C+J), [Yue Wang](https://arxiv.org/search/cs?searchtype=author&query=Wang%2C+Y), [Qi Meng](https://arxiv.org/search/cs?searchtype=author&query=Meng%2C+Q), [Tao Qin](https://arxiv.org/search/cs?searchtype=author&query=Qin%2C+T), [Wei Chen](https://arxiv.org/search/cs?searchtype=author&query=Chen%2C+W), [Min Zhang](https://arxiv.org/search/cs?searchtype=author&query=Zhang%2C+M), [Tie-Yan Liu](https://arxiv.org/search/cs?searchtype=author&query=Liu%2C+T) 2021. R-Drop: Regularized Dropout for Neural Networks [arXiv:2106.14448](https://arxiv.org/abs/2106.14448) **[cs.LG]**
+
