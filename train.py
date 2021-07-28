@@ -105,20 +105,16 @@ class Trainer(object):
                     output2,p = self.model(inputs, attention_mask=attention_mask)
                     if self.args.rdrop:
                         addition_loss = self.args.rdrop_alpha * compute_kl_loss(q,p,pad_mask=attention_mask) + addition_loss
-                        # rdrop loss * 0.05 = 1.+
                     if self.args.contrastive:
                         addition_loss = self.args.contrastive_alpha * self.contrastive_loss(p,q,attention_mask) + addition_loss
-                        # contrastive loss * 0.05 = 1.+
-                        # print(addition_loss)
                     loss = self.criterion(output.view(-1, self.args.num_classes), target.view(-1))
                     loss2 = self.criterion(output2.view(-1, self.args.num_classes), target.view(-1))
-                    # print(loss)
                     loss = (loss2 + loss)/2 + addition_loss
                 else:
                     output = self.model(inputs, attention_mask=attention_mask)
                     loss = self.criterion(output.view(-1, self.args.num_classes), target.view(-1))
-
             loss.backward()
+
             dTP, dFP, dFN = self.metrics(output, target, attention_mask)
             TP += dTP
             FP += dFP
@@ -172,6 +168,7 @@ class Trainer(object):
         return dev_losses / count, self.metrics.get_f1(TP, FP, FN, verbose=self.args.verbose)
 
     def run(self):
+        self.update_loss = 0
         times = datetime.now()
         self.writer = SummaryWriter(f'runs/{self.args.mode}_{self.args.seed}_{self.model_name}_{times}')
         if not os.path.exists('checkout/state_dict'):
@@ -188,9 +185,6 @@ class Trainer(object):
             if self.step > self.args.max_steps:
                 break
 
-        # path = f'checkout/state_dict/{self.model_name}_{self.args.mode}_final.pth'
-        # torch.save(self.model.state_dict(), path)
-        # print(f'>> saved: {path}')
         self.writer.close()
 
     def _checkout(self, epoch):
@@ -218,7 +212,6 @@ class Trainer(object):
 
 
 def main(args):
-
     optimizers = {
         'adadelta': torch.optim.Adadelta,  # default lr=1.0
         'adagrad': torch.optim.Adagrad,  # default lr=0.01

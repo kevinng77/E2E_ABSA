@@ -47,20 +47,25 @@
 
 ## Experiment
 
-|                              | **lap 14** | **lap 14** | **lap 14** | res 16 | res 16    | res 16    | res 14    | res 14    | res 14    |
-| ---------------------------- | ---------- | ---------- | ---------- | ------ | --------- | --------- | --------- | --------- | --------- |
-| models                       | AE         | PC         | CE         | AE     | PC        | CE        | AE        | PC        | CE        |
-| bert-linear                  | 87.60      | 70.14      | 64.80      | 85.30  | 67.11     | 62.34     | 89.49     | 72.04     | 68.13     |
-| bert-lstm                    | 87.07      | **71.31**  | 65.01      | 85.57  | **70.83** | **64.93** | **90.23** | 72.20     | 68.87     |
-| bert-san                     | 87.08      | 69.57      | 63.94      | 85.09  | 67.15     | 61.88     | 90.01     | **74.46** | **70.12** |
-| bert-crf                     | 87.80      | 69.97      | **65.07**  | 85.73  | 69.12     | 64.20     | 89.97     | 72.82     | 68.72     |
-| bert-linear r-drop           | 88.37      | 68.29      | 64.73      | 85.96  | 71.17     | 66.5      | 89.77     | 73.89     | 69.55     |
-| bert-linear contrastive loss |            |            |            |        |           |           |           |           |           |
-|                              |            |            |            |        |           |           |           |           |           |
+**CE (Co-Extract) F1**: Macro f1 for 4 classes during testing. (Not aspect, aspect-pos, aspect-neg, aspect-neu). 
 
+**AE (Aspect Extract) F1**: Macro f1 for 2 classes during testing. (Not aspect term, aspect term)
 
+**PC (Polarity Classify) F1**: Macro f1 for 3 classes during testing. (aspect-pos, aspect-neg, aspect-neu)
 
-More esults please referred to [result folder](results/)
+**BP (Broken Prediction)**: Number of predictions with inconsistent polarity <u>for target aspect term</u>. i.e. B-neg, I-pos, E-pos
+
+**Result for bert**
+
+|             | **lap 14** | **lap 14** | **lap 14** | res 16 | res 16    | res 16    | res 14    | res 14    | res 14    |
+| ----------- | ---------- | ---------- | ---------- | ------ | --------- | --------- | --------- | --------- | --------- |
+| **models**  | **AE**     | **PC**     | **CE**     | **AE** | **PC**    | **CE**    | **AE**    | **PC**    | **CE**    |
+| bert-linear | 87.60      | 70.14      | 64.80      | 85.30  | 67.11     | 62.34     | 89.49     | 72.04     | 68.13     |
+| bert-lstm   | 87.07      | **71.31**  | 65.01      | 85.57  | **70.83** | **64.93** | **90.23** | 72.20     | 68.87     |
+| bert-san    | 87.08      | 69.57      | 63.94      | 85.09  | 67.15     | 61.88     | 90.01     | **74.46** | **70.12** |
+| bert-crf    | 87.80      | 69.97      | **65.07**  | 85.73  | 69.12     | 64.20     | 89.97     | 72.82     | 68.72     |
+
+More results please referred to [result folder](results/)
 
 ## To Run
 

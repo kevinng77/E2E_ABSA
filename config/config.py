@@ -4,14 +4,6 @@ working_path = pathlib.Path(__file__).absolute().parent.parent
 parser = argparse.ArgumentParser()
 
 
-parser.add_argument("--augument",default=False,action='store_true')
-parser.add_argument("--contrastive",default=False,action='store_true')
-parser.add_argument("--rdrop",default=False,action='store_true')
-parser.add_argument("--rdrop_alpha",type=float,default=0.01)
-parser.add_argument("--temp",type=float,default=0.05)  # referred to simcse
-parser.add_argument("--contrastive_alpha",type=float,default=0.05)
-
-
 # Preprocessing
 parser.add_argument('--max_seq_len', type=int, default=128, help="default 128")
 parser.add_argument('--pretrained_bert_name', type=str, default='bert-base-uncased',
@@ -62,8 +54,15 @@ parser.add_argument("--adam_amsgrad", default=False, action='store_true')
 
 # path
 parser.add_argument('--mode',type=str,default="debug",help="default debug, res14, res16 or lap14")
-
 parser.add_argument('--finetune_elmo',default=False,action='store_true',help="ELMo.trainable = True if provided")
+
+# data augument test
+parser.add_argument("--augument",default=False,action='store_true')
+parser.add_argument("--contrastive",default=False,action='store_true')
+parser.add_argument("--rdrop",default=False,action='store_true')
+parser.add_argument("--rdrop_alpha",type=float,default=0.01)
+parser.add_argument("--temp",type=float,default=0.05)  # referred to simcse
+parser.add_argument("--contrastive_alpha",type=float,default=0.01)
 
 # test or demo
 parser.add_argument("--demo",default=False,action='store_true')
