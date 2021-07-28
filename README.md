@@ -13,20 +13,20 @@
 │   │   ├── elmo_2x4096_512_2048cnn_2xhighway_options.json
 │   │   └── elmo_2x4096_512_2048cnn_2xhighway_weights.hdf5
 │   ├── glove  //glove pretrained embeddings
-│   │   ├── Semeval2014
-│   │   ├── processed //processed files
-│   │   │   ├── Restaurants_dev_v2.csv
-│   │   │   ├── Restaurants_test_v2.csv
-│   │   │   └── Restaurants_Train_v2.csv
-│   │   └── raw  //raw SemEval xml data file
-│   │       ├── Laptops_Train.xml
-│   │       ├── Laptop_Train_v2.xml
-│   │       ├── Restaurants_Train_v2.xml
-│   │       └── Restaurants_Train.xml
+│   ├── Semeval2014
+│   ├── processed //processed files
+│   │   ├── Restaurants_dev_v2.csv
+│   │   ├── Restaurants_test_v2.csv
+│   │   └── Restaurants_Train_v2.csv
+│   └── raw  //raw SemEval xml data file
+│   │   ├── Laptops_Train.xml
+│   │   ├── Laptop_Train_v2.xml
+│   │   ├── Restaurants_Train_v2.xml
+│   │   └── Restaurants_Train.xml
 │   ├── Semeval2016
 │   │   ├── processed
 │   │   └── raw
-│   ├── stopwords.txt
+│   └── stopwords.txt
 ├── models
 │   ├── downstream.py  //Linear, LSTM, Self-Attention, CRF
 │   └── pretrain_model.py  
@@ -57,6 +57,8 @@
 
 **Result for bert**
 
+<u>The following model is trained and test on different dataset with split seed (6, 7, 8, 66, 77). Each model test on each dataset once. The final score is the mean of Macro F1 for 5 tests.</u>
+
 |             | **lap 14** | **lap 14** | **lap 14** | res 16 | res 16    | res 16    | res 14    | res 14    | res 14    |
 | ----------- | ---------- | ---------- | ---------- | ------ | --------- | --------- | --------- | --------- | --------- |
 | **models**  | **AE**     | **PC**     | **CE**     | **AE** | **PC**    | **CE**    | **AE**    | **PC**    | **CE**    |
@@ -65,7 +67,7 @@
 | bert-san    | 87.08      | 69.57      | 63.94      | 85.09  | 67.15     | 61.88     | 90.01     | **74.46** | **70.12** |
 | bert-crf    | 87.80      | 69.97      | **65.07**  | 85.73  | 69.12     | 64.20     | 89.97     | 72.82     | 68.72     |
 
-More results please referred to [result folder](results/)
+More results or detail please referred to [result folder](results/)
 
 ## To Run
 
