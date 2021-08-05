@@ -114,6 +114,10 @@ training log path: `./checkout/training_log.txt`
 
 testing log path: `./checkout/test_log.txt`
 
+#### 关于本仓库的 colba demo（中文）
+
+[colab 链接](https://colab.research.google.com/drive/1X5CZ1LY5d-_oo8RewrZ4st-DC5F1fXCe?usp=sharing)
+
 ## Reference
 
 SemEval official
