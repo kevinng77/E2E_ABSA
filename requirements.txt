@@ -1,6 +1,6 @@
 allennlp==2.5.0
 huggingface-hub==0.0.8
-nltk==3.6.2
+nltk==3.6.5
 sentencepiece==0.1.91
 tokenizers==0.10.3
 torch==1.7.1
