@@ -1,4 +1,7 @@
 # ABSA E2E
+
+ABSA analysis on SemEval 2014 Task 4 and SemEval 2016 Task 5.
+
 ```c
 .
 ├── checkout
@@ -46,8 +49,6 @@
 ```
 
 ## Experiment
-
-ABSA analysis on SemEval 2014 Task 4 and SemEval 2016 Task 5.
 
 Main Results:
 
