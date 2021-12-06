@@ -47,6 +47,10 @@
 
 ## Experiment
 
+ABSA analysis on SemEval 2014 Task 4 and SemEval 2016 Task 5.
+
+Main Results:
+
 **CE (Co-Extract) F1**: Macro f1 for 4 classes during testing. (Not aspect, aspect-pos, aspect-neg, aspect-neu). 
 
 **AE (Aspect Extract) F1**: Macro f1 for 2 classes during testing. (Not aspect term, aspect term)
